@@ -64,7 +64,7 @@ namespace Validay.Network.Interfaces
         /// <summary>
         /// Disconnect client
         /// </summary>
-        /// <param name="socket">Client target</param>
+        /// <param name="client">Client target</param>
         void DisconnectClient(IClient client);
 
         /// <summary>

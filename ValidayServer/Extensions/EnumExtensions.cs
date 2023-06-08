@@ -5,6 +5,9 @@ using System.Reflection;
 
 namespace Validay.Extensions
 {
+    /// <summary>
+    /// Enum extensions
+    /// </summary>
     public static class EnumExtensions
     {
         /// <summary>
