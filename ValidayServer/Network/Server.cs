@@ -36,6 +36,16 @@ namespace Validay.Network
         /// </summary>
         public event Action<IClient, byte[]>? OnSendedData;
 
+        /// <summary>
+        /// <inheritdoc/>
+        /// </summary>
+        public event Action<IClient>? OnClientConnected;
+
+        /// <summary>
+        /// <inheritdoc/>
+        /// </summary>
+        public event Action<IClient>? OnClientDisconnected;
+
         private bool _hideSocketError;
         private string _ip;
         private int _port;
@@ -141,7 +151,7 @@ namespace Validay.Network
                 _serverSocket.Listen(_connectingClientQueue);
 
                 _serverSocket.BeginAccept(
-                    new AsyncCallback(OnClientConnected), 
+                    new AsyncCallback(OnClientConnect), 
                     null);
 
                 _logger?.Log(
@@ -240,7 +250,7 @@ namespace Validay.Network
         /// </summary>
         public virtual void DisconnectClient(IClient client)
         {
-            OnClientDisconnected(client);
+            OnClientDisconnect(client);
         }
 
         /// <summary>
@@ -253,7 +263,7 @@ namespace Validay.Network
                 .AsReadOnly();
         }
 
-        private void OnClientDisconnected(IClient client)
+        private void OnClientDisconnect(IClient client)
         {
             if (client == null)
                 return;
@@ -276,6 +286,8 @@ namespace Validay.Network
             }
             finally
             {
+                OnClientDisconnected?.Invoke(client);
+
                 _logger?.Log(
                     $"Client [{endPoint?.Address}] disconnected!",
                     LogType.Info);
@@ -284,7 +296,7 @@ namespace Validay.Network
             }
         }
 
-        private void OnClientConnected(IAsyncResult asyncResult)
+        private void OnClientConnect(IAsyncResult asyncResult)
         {
             try
             {
@@ -294,7 +306,7 @@ namespace Validay.Network
                 _clients.Add(client);
 
                 _serverSocket.BeginAccept(
-                    new AsyncCallback(OnClientConnected), 
+                    new AsyncCallback(OnClientConnect), 
                     null);
 
                 clientSocket.BeginReceive(
@@ -304,6 +316,8 @@ namespace Validay.Network
                     SocketFlags.None,
                     new AsyncCallback(OnDataReceived), 
                     clientSocket);
+
+                OnClientConnected?.Invoke(client);
 
                 _logger?.Log(
                     "Client connected!", 
@@ -368,7 +382,7 @@ namespace Validay.Network
                         $"Receive data failed! {exception.Message}",
                         LogType.Error);
 
-                OnClientDisconnected(client);
+                OnClientDisconnect(client);
             }
         }
 
@@ -396,7 +410,7 @@ namespace Validay.Network
                         $"Data sent failed! {exception.Message}", 
                         LogType.Error);
 
-                OnClientDisconnected(client);
+                OnClientDisconnect(client);
             }
         }
     }

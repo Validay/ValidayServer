@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.2.32616.157
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ValidayServer", "ValidayServer.csproj", "{9412C9FB-5D34-48BA-B75F-A60FEAD0266A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ValidayServer", "ValidayServer\ValidayServer.csproj", "{73194FD1-73A6-448A-B1EB-A2BB8EF4C84F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ValisayServerTest", "ValisayServerTest\ValisayServerTest.csproj", "{5E46862B-E497-47F5-9098-CE473C0A3413}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,10 +13,14 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{9412C9FB-5D34-48BA-B75F-A60FEAD0266A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9412C9FB-5D34-48BA-B75F-A60FEAD0266A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9412C9FB-5D34-48BA-B75F-A60FEAD0266A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{9412C9FB-5D34-48BA-B75F-A60FEAD0266A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{73194FD1-73A6-448A-B1EB-A2BB8EF4C84F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{73194FD1-73A6-448A-B1EB-A2BB8EF4C84F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{73194FD1-73A6-448A-B1EB-A2BB8EF4C84F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{73194FD1-73A6-448A-B1EB-A2BB8EF4C84F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5E46862B-E497-47F5-9098-CE473C0A3413}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5E46862B-E497-47F5-9098-CE473C0A3413}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5E46862B-E497-47F5-9098-CE473C0A3413}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5E46862B-E497-47F5-9098-CE473C0A3413}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -26,6 +26,16 @@ namespace Validay.Network.Interfaces
         event Action<IClient, byte[]> OnSendedData;
 
         /// <summary>
+        /// Event for connect client
+        /// </summary>
+        event Action<IClient> OnClientConnected;
+
+        /// <summary>
+        /// Event for disconnect client
+        /// </summary>
+        event Action<IClient> OnClientDisconnected;
+
+        /// <summary>
         /// Registration new manager
         /// </summary>
         /// <typeparam name="T">Manager type</typeparam>
