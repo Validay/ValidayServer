@@ -1,0 +1,12 @@
+{
+  "name": "com.validay.validayserver",
+  "version": "1.0.0",
+  "displayName": "Validay Server",
+  "description": "Light socket server",
+  "unity": "2021.3",
+  "author": {
+    "name": "Validay",
+    "email": "validaypromabe@gmail.com",
+    "url": ""
+  }
+}
