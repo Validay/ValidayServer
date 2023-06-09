@@ -3,7 +3,6 @@ using Validay.Logging.Interfaces;
 using Validay.Managers.Interfaces;
 using Validay.Network.Commands.Interfaces;
 using Validay.Network.Interfaces;
-using Validay.Unilities;
 using System;
 
 namespace Validay.Managers
@@ -87,14 +86,16 @@ namespace Validay.Managers
             IClient sender, 
             byte[] data)
         {
+            if (_server == null)
+                return;
+
             short commandId = BitConverter.ToInt16(data, 0);
 
-            if (CommandHelper.ServerCommandsMap.TryGetValue(
+            if (_server.ServerCommandsMap.TryGetValue(
                 commandId, 
                 out Type commandType))
             {
-                if (commandType == null
-                    || _server == null)
+                if (commandType == null)
                     return;
 
                 var command = Activator.CreateInstance(commandType) 

@@ -8,6 +8,7 @@ using Validay.Network.Interfaces;
 using Validay.Logging.Interfaces;
 using Validay.Logging;
 using Validay.Managers.Interfaces;
+using Validay.Network.Commands.Interfaces;
 
 namespace Validay.Network
 {
@@ -24,6 +25,16 @@ namespace Validay.Network
             get => _managers
                 .ToList()
                 .AsReadOnly(); 
+        }
+
+        /// <summary>
+        /// <inheritdoc/>
+        /// </summary>
+        public IReadOnlyDictionary<short, Type> ServerCommandsMap
+        {
+            get => _serverCommandsMap.ToDictionary(
+                command => command.Key, 
+                command => command.Value);
         }
 
         /// <summary>
@@ -57,6 +68,7 @@ namespace Validay.Network
         private ILogger _logger;
         private IClientFactory _clientFactory;
         private IManagerFactory _managerFactory;
+        private Dictionary<short, Type> _serverCommandsMap;
 
         /// <summary>
         /// Default server constructor
@@ -75,6 +87,7 @@ namespace Validay.Network
             ServerSettings serverSettings,
             bool hideSocketError)
         {
+            _serverCommandsMap = new Dictionary<short, Type>();
             _hideSocketError = hideSocketError;
             _ip = serverSettings.Ip;
             _port = serverSettings.Port;
@@ -89,6 +102,22 @@ namespace Validay.Network
                 AddressFamily.InterNetwork,
                 SocketType.Stream,
                 ProtocolType.Tcp);
+        }
+
+        /// <summary>
+        /// <inheritdoc/>
+        /// </summary>
+        /// <exception cref="InvalidOperationException">ServerCommandsMap already exists this id</exception>
+        public void RegistrationCommand<T>(short id)
+            where T : IServerCommand
+        {
+            if (_serverCommandsMap.ContainsKey(id))
+                throw new InvalidOperationException($"ServerCommandsMap already exists this id = {id}!");
+
+            if (_serverCommandsMap.ContainsValue(typeof(T)))
+                throw new InvalidOperationException($"ServerCommandsMap already exists this type {nameof(T)}!");
+
+            _serverCommandsMap.Add(id, typeof(T));
         }
 
         /// <summary>
