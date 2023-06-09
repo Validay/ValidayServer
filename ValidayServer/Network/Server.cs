@@ -20,6 +20,11 @@ namespace Validay.Network
         /// <summary>
         /// <inheritdoc/>
         /// </summary>
+        public bool IsRun => _isRunning;
+
+        /// <summary>
+        /// <inheritdoc/>
+        /// </summary>
         public IReadOnlyCollection<IManager> Managers 
         { 
             get => _managers
@@ -57,6 +62,7 @@ namespace Validay.Network
         /// </summary>
         public event Action<IClient>? OnClientDisconnected;
 
+        private bool _isRunning;
         private bool _hideSocketError;
         private string _ip;
         private int _port;
@@ -183,6 +189,8 @@ namespace Validay.Network
                     new AsyncCallback(OnClientConnect), 
                     null);
 
+                _isRunning = true;
+
                 _logger?.Log(
                     "Server started!", 
                     LogType.Info);
@@ -216,6 +224,8 @@ namespace Validay.Network
                 {
                     _serverSocket.Close();
 
+                    _isRunning = false;
+
                     _logger?.Log(
                         "Server stopped!", 
                         LogType.Info);
@@ -245,8 +255,6 @@ namespace Validay.Network
             if (client == null)
                 return;
 
-            IPEndPoint endPoint = (IPEndPoint)client.Socket.RemoteEndPoint;
-
             try
             {
                 client.Socket.BeginSend(
@@ -262,7 +270,7 @@ namespace Validay.Network
                     rawData);
 
                 _logger?.Log(
-                    $"Send data [{rawData.Length} bytes] to [{endPoint.Address}:{endPoint.Port}]",
+                    $"Send data [{rawData.Length} bytes] to [{client?.Ip}:{client?.Port}]",
                     LogType.Low);
             }
             catch (Exception exception)
@@ -297,11 +305,8 @@ namespace Validay.Network
             if (client == null)
                 return;
 
-            IPEndPoint? endPoint = null;
-
             try
             {
-                endPoint = (IPEndPoint)client.Socket.RemoteEndPoint;
                 client.Socket.Close();
             }
             catch (Exception exception)
@@ -318,20 +323,21 @@ namespace Validay.Network
                 OnClientDisconnected?.Invoke(client);
 
                 _logger?.Log(
-                    $"Client [{endPoint?.Address}] disconnected!",
+                    $"Client [{client?.Ip}:{client?.Port}] disconnected!",
                     LogType.Info);
 
-                _clients.Remove(client);
+                if (client != null)
+                    _clients.Remove(client);
             }
         }
 
         private void OnClientConnect(IAsyncResult asyncResult)
         {
+            Socket clientSocket = _serverSocket.EndAccept(asyncResult);
+            IClient client = _clientFactory.CreateClient(clientSocket);
+
             try
             {
-                Socket clientSocket = _serverSocket.EndAccept(asyncResult);
-                IClient client = _clientFactory.CreateClient(clientSocket);
-
                 _clients.Add(client);
 
                 _serverSocket.BeginAccept(
@@ -349,14 +355,14 @@ namespace Validay.Network
                 OnClientConnected?.Invoke(client);
 
                 _logger?.Log(
-                    "Client connected!", 
+                    $"Client [{client?.Ip}:{client?.Port}] connected!", 
                     LogType.Info);
             }
             catch (Exception exception)
             {
                 if (!_hideSocketError)
                     _logger?.Log(
-                        $"Client connect failed! {exception.Message}", 
+                        $"Client [{client?.Ip}:{client?.Port}] connect failed! {exception.Message}", 
                         LogType.Error);
             }
         }
@@ -418,7 +424,6 @@ namespace Validay.Network
         private void OnDataSent(IAsyncResult asyncResult)
         {
             Socket clientSocket = (Socket)asyncResult.AsyncState;
-            IPEndPoint endPoint = (IPEndPoint)clientSocket.RemoteEndPoint;
             IClient client = _clients.FirstOrDefault(client => client.Socket == clientSocket);
 
             if (client == null)
@@ -429,17 +434,18 @@ namespace Validay.Network
                 clientSocket.EndSend(asyncResult);
 
                 _logger?.Log(
-                    $"Data sent to [{endPoint.Address}:{endPoint.Port}] success!", 
+                    $"Data sent to [{client?.Ip}:{client?.Port}] success!", 
                     LogType.Low);
             }
             catch (Exception exception)
             {
                 if (!_hideSocketError)
                     _logger?.Log(
-                        $"Data sent failed! {exception.Message}", 
+                        $"Data sent to [{client?.Ip}:{client?.Port}] failed! {exception.Message}", 
                         LogType.Error);
 
-                OnClientDisconnect(client);
+                if (client != null)
+                    OnClientDisconnect(client);
             }
         }
     }

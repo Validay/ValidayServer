@@ -12,6 +12,11 @@ namespace Validay.Network.Interfaces
     public interface IServer
     {
         /// <summary>
+        /// Is the server running
+        /// </summary>
+        bool IsRun { get; }
+
+        /// <summary>
         /// Managers colection 
         /// </summary>
         IReadOnlyCollection<IManager> Managers { get; }
