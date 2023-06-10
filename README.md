@@ -7,4 +7,8 @@
   ![Nuget](https://img.shields.io/nuget/dt/ValidayServer?label=nuget)
   ![GitHub commit activity](https://img.shields.io/github/commit-activity/t/Validay/ValidayServer)
   ![GitHub last commit](https://img.shields.io/github/last-commit/Validay/ValidayServer)
+  
+  
+  Roadmap:
+  - Hashing commands
 </div>
