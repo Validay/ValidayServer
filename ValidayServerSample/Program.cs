@@ -1,15 +1,23 @@
-﻿using Validay.Network;
-using Validay.Managers;
-using Validay.Network.Interfaces;
+﻿using ValidayServer.Network;
+using ValidayServer.Managers;
+using ValidayServer.Network.Interfaces;
 using ValidayServerSample.Managers;
 
 namespace ValidayServerSample
 {
-    internal class Program
+    public class Program
     {
+        public static IServer? server;
+        public static Timer? timer;
+
         static void Main(string[] args)
         {
-            IServer server = new Server();
+            server = new Server();
+            timer = new Timer(
+                SendTestData, 
+                null, 
+                0, 
+                1000);
 
             server.RegistrationManager<CommandHandlerManager>();
             server.RegistrationManager<ConnectionCheckManager>();
@@ -19,6 +27,23 @@ namespace ValidayServerSample
 
             while (server.IsRun)
             { };
+        }
+
+        private static void SendTestData(object? state)
+        {
+            if (server == null)
+                return;
+
+            foreach (IClient client in server.GetAllConnections())
+            {
+                byte[] rawData = new byte[2]
+                {
+                    1,
+                    6
+                };
+
+                server?.SendToClient(client, rawData);
+            }
         }
     }
 }

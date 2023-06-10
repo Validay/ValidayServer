@@ -1,4 +1,4 @@
-﻿namespace Validay.Network.Commands.Interfaces
+﻿namespace ValidayServer.Network.Commands.Interfaces
 {
     /// <summary>
     /// Interface client command

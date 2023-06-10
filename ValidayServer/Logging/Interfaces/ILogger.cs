@@ -1,7 +1,7 @@
-﻿namespace Validay.Logging.Interfaces
+﻿namespace ValidayServer.Logging.Interfaces
 {
     /// <summary>
-    /// Interface for logging on server room 
+    /// Interface for logging on server 
     /// </summary>
     public interface ILogger
     {

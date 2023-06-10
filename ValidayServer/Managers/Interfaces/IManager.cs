@@ -1,7 +1,7 @@
-﻿using Validay.Logging.Interfaces;
-using Validay.Network.Interfaces;
+﻿using ValidayServer.Logging.Interfaces;
+using ValidayServer.Network.Interfaces;
 
-namespace Validay.Managers.Interfaces
+namespace ValidayServer.Managers.Interfaces
 {
     /// <summary>
     /// Main interface for manager

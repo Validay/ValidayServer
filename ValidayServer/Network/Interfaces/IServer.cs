@@ -1,10 +1,10 @@
-﻿using Validay.Managers.Interfaces;
+﻿using ValidayServer.Managers.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using Validay.Network.Commands.Interfaces;
+using ValidayServer.Network.Commands.Interfaces;
 
-namespace Validay.Network.Interfaces
+namespace ValidayServer.Network.Interfaces
 {
     /// <summary>
     /// Interface for server

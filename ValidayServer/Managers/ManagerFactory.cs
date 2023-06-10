@@ -1,7 +1,7 @@
-﻿using Validay.Managers.Interfaces;
+﻿using ValidayServer.Managers.Interfaces;
 using System;
 
-namespace Validay.Managers
+namespace ValidayServer.Managers
 {
     /// <summary>
     /// Default manager factory

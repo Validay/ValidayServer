@@ -1,7 +1,7 @@
-﻿using Validay.Network.Interfaces;
+﻿using ValidayServer.Network.Interfaces;
 using System.Net.Sockets;
 
-namespace Validay.Network
+namespace ValidayServer.Network
 {
     /// <summary>
     /// Base class client factory

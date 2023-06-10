@@ -1,4 +1,4 @@
-﻿namespace Validay.Managers.Interfaces
+﻿namespace ValidayServer.Managers.Interfaces
 {
     /// <summary>
     /// Main interface for server factory

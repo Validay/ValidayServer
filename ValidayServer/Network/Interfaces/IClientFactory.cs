@@ -1,6 +1,6 @@
 ﻿using System.Net.Sockets;
 
-namespace Validay.Network.Interfaces
+namespace ValidayServer.Network.Interfaces
 {
     /// <summary>
     /// Interface for client factory

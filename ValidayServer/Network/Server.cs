@@ -4,13 +4,13 @@ using System.Net.Sockets;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using Validay.Network.Interfaces;
-using Validay.Logging.Interfaces;
-using Validay.Logging;
-using Validay.Managers.Interfaces;
-using Validay.Network.Commands.Interfaces;
+using ValidayServer.Network.Interfaces;
+using ValidayServer.Logging.Interfaces;
+using ValidayServer.Logging;
+using ValidayServer.Managers.Interfaces;
+using ValidayServer.Network.Commands.Interfaces;
 
-namespace Validay.Network
+namespace ValidayServer.Network
 {
     /// <summary>
     /// Default implementation server

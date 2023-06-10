@@ -1,8 +1,8 @@
 using Xunit;
-using Validay.Network;
-using Validay.Managers;
-using Validay.Network.Interfaces;
-using Validay.Logging;
+using ValidayServer.Network;
+using ValidayServer.Managers;
+using ValidayServer.Network.Interfaces;
+using ValidayServer.Logging;
 
 namespace ValidayServerTest
 {

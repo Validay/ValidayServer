@@ -1,11 +1,11 @@
-﻿using Validay.Logging.Interfaces;
-using Validay.Extensions;
+﻿using ValidayServer.Logging.Interfaces;
+using ValidayServer.Extensions;
 using System;
 
-namespace Validay.Logging
+namespace ValidayServer.Logging
 {
     /// <summary>
-    /// Main logger for server room
+    /// Main logger for server
     /// </summary>
     public class ConsoleLogger : ILogger
     {

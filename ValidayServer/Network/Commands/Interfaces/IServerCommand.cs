@@ -1,8 +1,8 @@
-﻿using Validay.Managers.Interfaces;
-using Validay.Network.Interfaces;
+﻿using ValidayServer.Managers.Interfaces;
+using ValidayServer.Network.Interfaces;
 using System.Collections.Generic;
 
-namespace Validay.Network.Commands.Interfaces
+namespace ValidayServer.Network.Commands.Interfaces
 {
     /// <summary>
     /// Interface server command

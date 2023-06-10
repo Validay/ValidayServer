@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Net;
 using System.Net.Sockets;
-using Validay.Logging;
-using Validay.Logging.Interfaces;
-using Validay.Managers;
-using Validay.Managers.Interfaces;
-using Validay.Network.Interfaces;
+using ValidayServer.Logging;
+using ValidayServer.Logging.Interfaces;
+using ValidayServer.Managers;
+using ValidayServer.Managers.Interfaces;
+using ValidayServer.Network.Interfaces;
 
-namespace Validay.Network
+namespace ValidayServer.Network
 {
     /// <summary>
     /// Server settings

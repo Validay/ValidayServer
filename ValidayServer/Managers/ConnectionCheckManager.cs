@@ -1,12 +1,12 @@
-﻿using Validay.Logging;
-using Validay.Logging.Interfaces;
-using Validay.Managers.Interfaces;
-using Validay.Network.Interfaces;
+﻿using ValidayServer.Logging;
+using ValidayServer.Logging.Interfaces;
+using ValidayServer.Managers.Interfaces;
+using ValidayServer.Network.Interfaces;
 using System;
 using System.Threading;
 using System.Net.Sockets;
 
-namespace Validay.Managers
+namespace ValidayServer.Managers
 {
     /// <summary>
     /// Manager for checking connection all clients

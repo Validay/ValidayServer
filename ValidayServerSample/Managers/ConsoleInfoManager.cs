@@ -1,8 +1,8 @@
 ﻿using System.Diagnostics;
-using Validay.Logging;
-using Validay.Logging.Interfaces;
-using Validay.Managers.Interfaces;
-using Validay.Network.Interfaces;
+using ValidayServer.Logging;
+using ValidayServer.Logging.Interfaces;
+using ValidayServer.Managers.Interfaces;
+using ValidayServer.Network.Interfaces;
 
 namespace ValidayServerSample.Managers
 {

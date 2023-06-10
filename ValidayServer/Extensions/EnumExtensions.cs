@@ -3,7 +3,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 
-namespace Validay.Extensions
+namespace ValidayServer.Extensions
 {
     /// <summary>
     /// Enum extensions

@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
 
-namespace Validay.Logging
+namespace ValidayServer.Logging
 {
     /// <summary>
     /// Log level type enum
