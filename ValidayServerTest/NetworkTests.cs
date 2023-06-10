@@ -47,6 +47,19 @@ namespace ValidayServerTest
         }
 
         [Fact]
+        public void RegistrationManagerInvalidOperationExceptionAlreadyExistType()
+        {
+            Assert.Throws<InvalidOperationException>(() =>
+            {
+                IServer server = new Server();
+                CommandHandlerManager commandHandler = new CommandHandlerManager();
+
+                server.RegistrationManager<CommandHandlerManager>();
+                server.RegistrationManager(commandHandler);
+            });
+        }
+
+        [Fact]
         public void CreateServerSettingsInvalidParameters()
         {
             Assert.Throws<FormatException>(() =>

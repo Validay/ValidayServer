@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using ValidayServer.Network.Commands.Interfaces;
 
 namespace ValidayServer.Network.Interfaces
 {
@@ -20,11 +19,6 @@ namespace ValidayServer.Network.Interfaces
         /// Managers colection 
         /// </summary>
         IReadOnlyCollection<IManager> Managers { get; }
-
-        /// <summary>
-        /// Get all server commands
-        /// </summary>
-        IReadOnlyDictionary<short, Type> ServerCommandsMap { get; }
 
         /// <summary>
         /// Event for recived data from client
@@ -47,19 +41,17 @@ namespace ValidayServer.Network.Interfaces
         event Action<IClient> OnClientDisconnected;
 
         /// <summary>
-        /// Registration new server command
-        /// </summary>
-        /// <typeparam name="T">Type server command</typeparam>
-        /// <param name="id">Id server command</param>
-        void RegistrationCommand<T>(short id)
-            where T : IServerCommand;
-
-        /// <summary>
         /// Registration new manager
         /// </summary>
         /// <typeparam name="T">Manager type</typeparam>
         void RegistrationManager<T>()
             where T : IManager;
+
+        /// <summary>
+        /// Registration new instance manager
+        /// </summary>
+        /// <param name="manager">Instance manager</param>
+        void RegistrationManager(IManager manager);
 
         /// <summary>
         /// Starting this server

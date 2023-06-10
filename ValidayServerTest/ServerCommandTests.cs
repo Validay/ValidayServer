@@ -2,7 +2,7 @@ using Xunit;
 using ValidayServer.Network.Interfaces;
 using ValidayServer.Network.Commands.Interfaces;
 using ValidayServer.Managers.Interfaces;
-using ValidayServer.Network;
+using ValidayServer.Managers;
 
 namespace ValidayServerTest
 {
@@ -31,15 +31,15 @@ namespace ValidayServerTest
         [Fact]
         public void RegistrationCommandSuccess()
         {
-            IServer server = new Server();
+            CommandHandlerManager commandHandler = new CommandHandlerManager();
 
-            server.RegistrationCommand<TestServerCommandOne>(1);
+            commandHandler.RegistrationCommand<TestServerCommandOne>(1);
 
-            Type type = server.ServerCommandsMap[1];
+            Type type = commandHandler.ServerCommandsMap[1];
 
             Assert.NotNull(type);
-            Assert.NotNull(server.ServerCommandsMap);
-            Assert.NotEmpty(server.ServerCommandsMap);
+            Assert.NotNull(commandHandler.ServerCommandsMap);
+            Assert.NotEmpty(commandHandler.ServerCommandsMap);
         }
 
         [Fact]
@@ -47,10 +47,10 @@ namespace ValidayServerTest
         {
             Assert.Throws<InvalidOperationException>(() => 
             {
-                IServer server = new Server();
+                CommandHandlerManager commandHandler = new CommandHandlerManager();
 
-                server.RegistrationCommand<TestServerCommandOne>(1);
-                server.RegistrationCommand<TestServerCommandOne>(2);
+                commandHandler.RegistrationCommand<TestServerCommandOne>(1);
+                commandHandler.RegistrationCommand<TestServerCommandOne>(2);
             });
         }
 
@@ -59,10 +59,10 @@ namespace ValidayServerTest
         {
             Assert.Throws<InvalidOperationException>(() =>
             {
-                IServer server = new Server();
+                CommandHandlerManager commandHandler = new CommandHandlerManager();
 
-                server.RegistrationCommand<TestServerCommandOne>(1);
-                server.RegistrationCommand<TestServerCommandTwo>(1);
+                commandHandler.RegistrationCommand<TestServerCommandOne>(1);
+                commandHandler.RegistrationCommand<TestServerCommandTwo>(1);
             });
         }
     }

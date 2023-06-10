@@ -8,7 +8,6 @@ using ValidayServer.Network.Interfaces;
 using ValidayServer.Logging.Interfaces;
 using ValidayServer.Logging;
 using ValidayServer.Managers.Interfaces;
-using ValidayServer.Network.Commands.Interfaces;
 
 namespace ValidayServer.Network
 {
@@ -30,16 +29,6 @@ namespace ValidayServer.Network
             get => _managers
                 .ToList()
                 .AsReadOnly(); 
-        }
-
-        /// <summary>
-        /// <inheritdoc/>
-        /// </summary>
-        public IReadOnlyDictionary<short, Type> ServerCommandsMap
-        {
-            get => _serverCommandsMap.ToDictionary(
-                command => command.Key, 
-                command => command.Value);
         }
 
         /// <summary>
@@ -73,8 +62,7 @@ namespace ValidayServer.Network
         private IList<IManager> _managers;
         private ILogger _logger;
         private IClientFactory _clientFactory;
-        private IManagerFactory _managerFactory;
-        private Dictionary<short, Type> _serverCommandsMap;
+        private IManagerFactory _managerFactory;        
 
         /// <summary>
         /// Default server constructor
@@ -93,7 +81,6 @@ namespace ValidayServer.Network
             ServerSettings serverSettings,
             bool hideSocketError)
         {
-            _serverCommandsMap = new Dictionary<short, Type>();
             _hideSocketError = hideSocketError;
             _ip = serverSettings.Ip;
             _port = serverSettings.Port;
@@ -108,22 +95,6 @@ namespace ValidayServer.Network
                 AddressFamily.InterNetwork,
                 SocketType.Stream,
                 ProtocolType.Tcp);
-        }
-
-        /// <summary>
-        /// <inheritdoc/>
-        /// </summary>
-        /// <exception cref="InvalidOperationException">ServerCommandsMap already exists this id</exception>
-        public void RegistrationCommand<T>(short id)
-            where T : IServerCommand
-        {
-            if (_serverCommandsMap.ContainsKey(id))
-                throw new InvalidOperationException($"ServerCommandsMap already exists this id = {id}!");
-
-            if (_serverCommandsMap.ContainsValue(typeof(T)))
-                throw new InvalidOperationException($"ServerCommandsMap already exists this type {nameof(T)}!");
-
-            _serverCommandsMap.Add(id, typeof(T));
         }
 
         /// <summary>
@@ -158,6 +129,30 @@ namespace ValidayServer.Network
                     $"Registration manager failed! {exception.Message}",
                     LogType.Error);
             }
+        }
+
+        /// <summary>
+        /// <inheritdoc/>
+        /// </summary>
+        /// <exception cref="InvalidOperationException">Already exist manager exception</exception>
+        public virtual void RegistrationManager(IManager manager)
+        {
+            bool hasExisting = _managers.FirstOrDefault(existManager => existManager.Name == manager.Name) != null;
+
+            if (hasExisting)
+            {
+                _logger?.Log(
+                    $"Registration manager failed! Manager [{manager.Name}] already registration!",
+                    LogType.Warning);
+
+                throw new InvalidOperationException($"Registration manager failed! Manager [{manager.Name}] already registration!");
+            }
+
+            manager.Initialize(
+                this,
+                _logger);
+
+            _managers.Add(manager);
         }
 
         /// <summary>

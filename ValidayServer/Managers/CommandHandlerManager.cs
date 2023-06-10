@@ -4,6 +4,8 @@ using ValidayServer.Managers.Interfaces;
 using ValidayServer.Network.Commands.Interfaces;
 using ValidayServer.Network.Interfaces;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace ValidayServer.Managers
 {
@@ -22,16 +24,35 @@ namespace ValidayServer.Managers
         /// </summary>
         public bool IsActive { get; set; }
 
+        /// <summary>
+        /// Get all server commands
+        /// </summary>
+        public IReadOnlyDictionary<short, Type> ServerCommandsMap
+        {
+            get => _serverCommandsMap.ToDictionary(
+                command => command.Key,
+                command => command.Value);
+        }
+
+        private Dictionary<short, Type> _serverCommandsMap;
         private IServer? _server;
         private ILogger? _logger;
 
         /// <summary>
+        /// Default constructor
+        /// </summary>
+        public CommandHandlerManager()
+        {
+            _serverCommandsMap = new Dictionary<short, Type>();
+        }
+
+        /// <summary>
         /// <inheritdoc/>
         /// </summary>
-        public void Initialize(
+        public virtual void Initialize(
             IServer server,
             ILogger logger)
-        {
+        {            
             _server = server;
             _logger = logger;
 
@@ -45,7 +66,7 @@ namespace ValidayServer.Managers
         /// <summary>
         /// <inheritdoc/>
         /// </summary>
-        public void Start()
+        public virtual void Start()
         {
             if (_server == null)
             {
@@ -68,7 +89,7 @@ namespace ValidayServer.Managers
         /// <summary>
         /// <inheritdoc/>
         /// </summary>
-        public void Stop()
+        public virtual void Stop()
         {
             if (_server == null)
                 return;
@@ -82,6 +103,27 @@ namespace ValidayServer.Managers
                 LogType.Info);
         }
 
+        /// <summary>
+        /// Registration new command type
+        /// </summary>
+        /// <typeparam name="T">Type command</typeparam>
+        /// <param name="id">Id command</param>
+        /// <exception cref="InvalidOperationException">Already exist command exception</exception>
+        public virtual void RegistrationCommand<T>(short id)
+            where T : IServerCommand
+        {
+            if (_serverCommandsMap == null)
+                _serverCommandsMap = new Dictionary<short, Type>();
+
+            if (_serverCommandsMap.ContainsKey(id))
+                throw new InvalidOperationException($"ServerCommandsMap already exists this id = {id}!");
+
+            if (_serverCommandsMap.ContainsValue(typeof(T)))
+                throw new InvalidOperationException($"ServerCommandsMap already exists this type {nameof(T)}!");
+
+            _serverCommandsMap.Add(id, typeof(T));
+        }
+
         private void OnDataReceived(
             IClient sender, 
             byte[] data)
@@ -91,7 +133,7 @@ namespace ValidayServer.Managers
 
             short commandId = BitConverter.ToInt16(data, 0);
 
-            if (_server.ServerCommandsMap.TryGetValue(
+            if (_serverCommandsMap.TryGetValue(
                 commandId, 
                 out Type commandType))
             {
