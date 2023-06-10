@@ -33,10 +33,9 @@ IServer server = new Server(
   true);
 </pre>
 
-### 3. Registration commands and managers
+### 3. Registration managers
 <pre>
 server.RegistrationManager&ltSomeManager>();
-server.RegistrationCommand&ltSomeCommand>();
 </pre>
 
 ### 4. Start server!
