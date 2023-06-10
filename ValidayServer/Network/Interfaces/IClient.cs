@@ -20,6 +20,6 @@ namespace ValidayServer.Network.Interfaces
         /// <summary>
         /// Client port
         /// </summary>
-        int Port { get; }   
+        int Port { get; }
     }
 }

@@ -6,6 +6,7 @@ using ValidayServer.Network.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Collections.ObjectModel;
 
 namespace ValidayServer.Managers
 {
@@ -41,9 +42,17 @@ namespace ValidayServer.Managers
         /// <summary>
         /// Default constructor
         /// </summary>
-        public CommandHandlerManager()
+        public CommandHandlerManager() 
+            : this(new Dictionary<short, Type>())
+        { }
+
+        /// <summary>
+        /// Constructor with explicit parameters
+        /// </summary>
+        /// <param name="serverCommandsMap">Server commands</param>
+        public CommandHandlerManager(Dictionary<short, Type> serverCommandsMap)
         {
-            _serverCommandsMap = new Dictionary<short, Type>();
+            _serverCommandsMap = serverCommandsMap;
         }
 
         /// <summary>

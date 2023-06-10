@@ -29,6 +29,22 @@ namespace ValidayServer.Managers
         private ILogger? _logger;
 
         /// <summary>
+        /// Default constructor
+        /// </summary>
+        public ConnectionCheckManager()
+            : this(10)
+        { }
+
+        /// <summary>
+        /// Constructor with explicit parameters
+        /// </summary>
+        /// <param name="heartbeatIntervalSeconds">Connection check interval</param>
+        public ConnectionCheckManager(int heartbeatIntervalSeconds)
+        {
+            _heartbeatIntervalSeconds = heartbeatIntervalSeconds;
+        }
+
+        /// <summary>
         /// <inheritdoc/>
         /// </summary>
         public void Initialize(

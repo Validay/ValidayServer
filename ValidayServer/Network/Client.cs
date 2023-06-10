@@ -12,21 +12,17 @@ namespace ValidayServer.Network
         /// <summary>
         /// <inheritdoc/>
         /// </summary>
-        public Socket Socket => _socket;
+        public Socket Socket { get; private set; }
 
         /// <summary>
         /// <inheritdoc/>
         /// </summary>
-        public string Ip => _ip;
+        public string Ip { get; private set; }
 
         /// <summary>
         /// <inheritdoc/>
         /// </summary>
-        public int Port => _port;
-
-        private Socket _socket;
-        private string _ip;
-        private int _port;
+        public int Port { get; private set; }
 
         /// <summary>
         /// Base constructor for client
@@ -36,9 +32,9 @@ namespace ValidayServer.Network
         {
             IPEndPoint endPoint = (IPEndPoint)socket.RemoteEndPoint;
 
-            _socket = socket;
-            _ip = endPoint.Address.ToString();
-            _port = endPoint.Port;
+            Socket = socket;
+            Ip = endPoint.Address.ToString();
+            Port = endPoint.Port;
         }
     }
 }

@@ -17,6 +17,7 @@ namespace ValidayServerSample
 
             server.RegistrationManager(commandHandler);
             server.RegistrationManager<ConnectionCheckManager>();
+            server.RegistrationManager<BadPacketDefenderManager>();
             server.RegistrationManager<ConsoleInfoManager>();
 
             server.Start();
