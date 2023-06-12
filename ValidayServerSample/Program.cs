@@ -2,7 +2,6 @@
 using ValidayServer.Managers;
 using ValidayServer.Network.Interfaces;
 using ValidayServerSample.Managers;
-using ValidayServerSample.Network.Commands.ServerCommand;
 
 namespace ValidayServerSample
 {
@@ -11,11 +10,8 @@ namespace ValidayServerSample
         static void Main(string[] args)
         {
             IServer server = new Server();
-            CommandHandlerManager commandHandler = new CommandHandlerManager();
 
-            commandHandler.RegistrationCommand<SimpleMessageCommand>(1);
-
-            server.RegistrationManager(commandHandler);
+            server.RegistrationManager<CommandHandlerManager>();
             server.RegistrationManager<ConnectionCheckManager>();
             server.RegistrationManager<BadPacketDefenderManager>();
             server.RegistrationManager<ConsoleInfoManager>();

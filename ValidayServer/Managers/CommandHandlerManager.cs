@@ -6,7 +6,7 @@ using ValidayServer.Network.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Collections.ObjectModel;
+using System.Reflection;
 
 namespace ValidayServer.Managers
 {
@@ -70,6 +70,28 @@ namespace ValidayServer.Managers
 
             if (_logger == null)
                 throw new NullReferenceException($"{nameof(CommandHandlerManager)}: Logger is null!");
+
+            Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+
+            foreach (Assembly assembly in assemblies)
+            {
+                Type[] types = assembly.GetTypes();
+
+                foreach (Type type in types)
+                {
+                    if (typeof(IServerCommand).IsAssignableFrom(type) 
+                        && !type.IsInterface)
+                    {
+                        object? serverCommand = Activator.CreateInstance(type);
+                        short id = ((IServerCommand)serverCommand).Id;
+
+                        if (serverCommand != null)
+                            _serverCommandsMap.Add(
+                                id,
+                                type);                    
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -110,27 +132,6 @@ namespace ValidayServer.Managers
             _logger?.Log(
                  $"{nameof(CommandHandlerManager)} stopped!",
                 LogType.Info);
-        }
-
-        /// <summary>
-        /// Registration new command type
-        /// </summary>
-        /// <typeparam name="T">Type command</typeparam>
-        /// <param name="id">Id command</param>
-        /// <exception cref="InvalidOperationException">Already exist command exception</exception>
-        public virtual void RegistrationCommand<T>(short id)
-            where T : IServerCommand
-        {
-            if (_serverCommandsMap == null)
-                _serverCommandsMap = new Dictionary<short, Type>();
-
-            if (_serverCommandsMap.ContainsKey(id))
-                throw new InvalidOperationException($"ServerCommandsMap already exists this id = {id}!");
-
-            if (_serverCommandsMap.ContainsValue(typeof(T)))
-                throw new InvalidOperationException($"ServerCommandsMap already exists this type {nameof(T)}!");
-
-            _serverCommandsMap.Add(id, typeof(T));
         }
 
         private void OnDataReceived(

@@ -10,6 +10,11 @@ namespace ValidayServer.Network.Commands.Interfaces
     public interface IServerCommand
     {
         /// <summary>
+        /// Id server command
+        /// </summary>
+        short Id { get; }
+
+        /// <summary>
         /// Executed this server command
         /// </summary>
         /// <param name="sender">Sender client executing server command</param>

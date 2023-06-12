@@ -7,6 +7,8 @@ namespace ValidayServerSample.Network.Commands.ServerCommand
 {
     public class SimpleMessageCommand : IServerCommand
     {
+        public short Id => 1;
+
         private const int countHeadBytes = 2;
 
         /// <summary>
