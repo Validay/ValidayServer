@@ -73,7 +73,7 @@ namespace ValidayServer.Network
         { }
 
         /// <summary>
-        /// Main server constructor
+        /// Constructor with explicit parameters
         /// </summary>
         /// <param name="serverSettings">Server parameters</param>
         /// <param name="hideSocketError">Hide no critical socket errors</param>
@@ -303,6 +303,15 @@ namespace ValidayServer.Network
             try
             {
                 client.Socket.Close();
+                client.Socket.Dispose();
+                OnClientDisconnected?.Invoke(client);
+
+                if (client != null)
+                    _clients.Remove(client);
+
+                _logger?.Log(
+                    $"Client [{client?.Ip}:{client?.Port}] disconnected!",
+                    LogType.Info);
             }
             catch (Exception exception)
             {
@@ -312,17 +321,6 @@ namespace ValidayServer.Network
                         LogType.Error);
 
                 _clients.Remove(client);
-            }
-            finally
-            {
-                OnClientDisconnected?.Invoke(client);
-
-                _logger?.Log(
-                    $"Client [{client?.Ip}:{client?.Port}] disconnected!",
-                    LogType.Info);
-
-                if (client != null)
-                    _clients.Remove(client);
             }
         }
 
@@ -411,8 +409,6 @@ namespace ValidayServer.Network
                     _logger?.Log(
                         $"Receive data failed! {exception.Message}",
                         LogType.Error);
-
-                OnClientDisconnect(client);
             }
         }
 
