@@ -363,7 +363,6 @@ namespace ValidayServer.Network
         private void OnDataReceived(IAsyncResult asyncResult)
         {
             Socket clientSocket = (Socket)asyncResult.AsyncState;
-            IPEndPoint endPoint = (IPEndPoint)clientSocket.RemoteEndPoint;
             IClient client = _clients.FirstOrDefault(client => client.Socket == clientSocket);
 
             if (client == null)
@@ -387,7 +386,7 @@ namespace ValidayServer.Network
                         rawData);
 
                     _logger?.Log(
-                        $"Received data [{rawData.Length} bytes] from [{endPoint.Address}:{endPoint.Port}]", 
+                        $"Received data [{rawData.Length} bytes] from [{client?.Ip}:{client?.Port}]", 
                         LogType.Low);
 
                     clientSocket.BeginReceive(
@@ -400,7 +399,7 @@ namespace ValidayServer.Network
                 }
                 else
                 {
-                    clientSocket.Close();
+                    DisconnectClient(client);
                 }
             }
             catch (Exception exception)
