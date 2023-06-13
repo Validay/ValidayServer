@@ -30,6 +30,7 @@ namespace ValidayServerTest
                 10,
                 1024,
                 100,
+                64,
                 new ClientFactory(),
                 new ManagerFactory(),
                 new ConsoleLogger(LogType.Info));
@@ -70,6 +71,7 @@ namespace ValidayServerTest
                     10,
                     1024,
                     100,
+                    64,
                     new ClientFactory(),
                     new ManagerFactory(),
                     new ConsoleLogger(LogType.Info));
@@ -83,6 +85,7 @@ namespace ValidayServerTest
                     10,
                     1024,
                     100,
+                    64,
                     new ClientFactory(),
                     new ManagerFactory(),
                     new ConsoleLogger(LogType.Info));
@@ -96,6 +99,7 @@ namespace ValidayServerTest
                     10,
                     1024,
                     100,
+                    64,
                     new ClientFactory(),
                     new ManagerFactory(),
                     new ConsoleLogger(LogType.Info));
@@ -109,6 +113,7 @@ namespace ValidayServerTest
                     -1,
                     1024,
                     100,
+                    64,
                     new ClientFactory(),
                     new ManagerFactory(),
                     new ConsoleLogger(LogType.Info));
@@ -122,6 +127,7 @@ namespace ValidayServerTest
                     10,
                     -1,
                     100,
+                    64,
                     new ClientFactory(),
                     new ManagerFactory(),
                     new ConsoleLogger(LogType.Info));
@@ -134,6 +140,21 @@ namespace ValidayServerTest
                     8888,
                     10,
                     1024,
+                    -1,
+                    64,
+                    new ClientFactory(),
+                    new ManagerFactory(),
+                    new ConsoleLogger(LogType.Info));
+            });
+
+            Assert.Throws<FormatException>(() =>
+            {
+                ServerSettings serverSettings = new ServerSettings(
+                    "127.0.0.1",
+                    8888,
+                    10,
+                    1024,
+                    100,
                     -1,
                     new ClientFactory(),
                     new ManagerFactory(),

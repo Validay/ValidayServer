@@ -127,7 +127,7 @@ namespace ValidayServer.Managers
 
             if (commandHandler != null)
             {
-                short commandId = BitConverter.ToInt16(rawData, 0);
+                ushort commandId = BitConverter.ToUInt16(rawData, 0);
 
                 if (!commandHandler.ServerCommandsMap.ContainsKey(commandId))
                 {
