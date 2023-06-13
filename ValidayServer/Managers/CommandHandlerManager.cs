@@ -28,14 +28,14 @@ namespace ValidayServer.Managers
         /// <summary>
         /// Get all server commands
         /// </summary>
-        public IReadOnlyDictionary<short, Type> ServerCommandsMap
+        public IReadOnlyDictionary<ushort, Type> ServerCommandsMap
         {
             get => _serverCommandsMap.ToDictionary(
                 command => command.Key,
                 command => command.Value);
         }
 
-        private Dictionary<short, Type> _serverCommandsMap;
+        private Dictionary<ushort, Type> _serverCommandsMap;
         private IServer? _server;
         private ILogger? _logger;
 
@@ -43,14 +43,14 @@ namespace ValidayServer.Managers
         /// Default constructor
         /// </summary>
         public CommandHandlerManager() 
-            : this(new Dictionary<short, Type>())
+            : this(new Dictionary<ushort, Type>())
         { }
 
         /// <summary>
         /// Constructor with explicit parameters
         /// </summary>
         /// <param name="serverCommandsMap">Server commands</param>
-        public CommandHandlerManager(Dictionary<short, Type> serverCommandsMap)
+        public CommandHandlerManager(Dictionary<ushort, Type> serverCommandsMap)
         {
             _serverCommandsMap = serverCommandsMap;
         }
@@ -118,11 +118,11 @@ namespace ValidayServer.Managers
         /// <typeparam name="T">Type command</typeparam>
         /// <param name="id">Id command</param>
         /// <exception cref="InvalidOperationException">Already exist command exception</exception>
-        public virtual void RegistrationCommand<T>(short id)
+        public virtual void RegistrationCommand<T>(ushort id)
             where T : IServerCommand
         {
             if (_serverCommandsMap == null)
-                _serverCommandsMap = new Dictionary<short, Type>();
+                _serverCommandsMap = new Dictionary<ushort, Type>();
 
             if (_serverCommandsMap.ContainsKey(id))
                 throw new InvalidOperationException($"ServerCommandsMap already exists this id = {id}!");
@@ -140,7 +140,7 @@ namespace ValidayServer.Managers
             if (_server == null)
                 return;
 
-            short commandId = BitConverter.ToInt16(data, 0);
+            ushort commandId = BitConverter.ToUInt16(data, 0);
 
             if (_serverCommandsMap.TryGetValue(
                 commandId, 
@@ -152,8 +152,9 @@ namespace ValidayServer.Managers
                 var command = Activator.CreateInstance(commandType) 
                     as IServerCommand;
 
+                //Пул команд, иначе стековерфлоу может быть!!!!!!!!!!!!!!!!
                 command?.Execute(
-                    sender, 
+                    sender,
                     _server.Managers,
                     data);
             }

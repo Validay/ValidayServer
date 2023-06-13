@@ -40,6 +40,11 @@ namespace ValidayServer.Network
         public int MaxConnection { get; set; }
 
         /// <summary>
+        /// Maximum depth for reading packet in client network stream
+        /// </summary>
+        public int MaxDepthReadPacket { get; set; }
+
+        /// <summary>
         /// Factory for creating clients
         /// </summary>
         public IClientFactory ClientFactory { get; set; }
@@ -64,6 +69,7 @@ namespace ValidayServer.Network
             MaxConnection = 100,
             Port = 8888,
             ConnectingClientQueue = 10,
+            MaxDepthReadPacket = 64,
             ClientFactory = new ClientFactory(),
             ManagerFactory = new ManagerFactory(),
             Logger = new ConsoleLogger(LogType.Info),
@@ -77,6 +83,7 @@ namespace ValidayServer.Network
         /// <param name="connectingClientQueue">Maximum number of expected connections</param>
         /// <param name="bufferSize">Buffer size</param>
         /// <param name="maxConnections">Maximum client connections</param>
+        /// <param name="maxDepthReadPacket">Maximum depth for reading packet in client network stream</param>
         /// <param name="clientFactory">Factory for creating clients</param>
         /// <param name="managerFactory">Factory for creating managers</param>
         /// <param name="logger">Logger for server</param>
@@ -87,12 +94,14 @@ namespace ValidayServer.Network
             int connectingClientQueue,
             int bufferSize,
             int maxConnections,
+            int maxDepthReadPacket,
             IClientFactory clientFactory,
             IManagerFactory managerFactory,
             ILogger logger)
         {
             if (bufferSize < 0
                 || connectingClientQueue < 0
+                || maxDepthReadPacket < 0
                 || maxConnections < 0
                 || clientFactory == null
                 || managerFactory == null
@@ -105,6 +114,7 @@ namespace ValidayServer.Network
             Ip = ip;
             Port = port;
             ConnectingClientQueue = connectingClientQueue;
+            MaxDepthReadPacket = maxDepthReadPacket;
             BufferSize = bufferSize;
             MaxConnection = maxConnections;
             ClientFactory = clientFactory;

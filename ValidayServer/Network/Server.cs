@@ -53,6 +53,7 @@ namespace ValidayServer.Network
 
         private bool _isRunning;
         private bool _hideSocketError;
+        private int _maxDepthReadPacket;
         private string _ip;
         private int _port;
         private int _connectingClientQueue;
@@ -62,7 +63,9 @@ namespace ValidayServer.Network
         private IList<IManager> _managers;
         private ILogger _logger;
         private IClientFactory _clientFactory;
-        private IManagerFactory _managerFactory;        
+        private IManagerFactory _managerFactory;
+
+        private readonly byte[] _markerStartPacket;
 
         /// <summary>
         /// Default server constructor
@@ -80,8 +83,9 @@ namespace ValidayServer.Network
         public Server(
             ServerSettings serverSettings,
             bool hideSocketError)
-        {
+        {           
             _hideSocketError = hideSocketError;
+            _maxDepthReadPacket = serverSettings.MaxDepthReadPacket;
             _ip = serverSettings.Ip;
             _port = serverSettings.Port;
             _connectingClientQueue = serverSettings.ConnectingClientQueue;          
@@ -95,6 +99,13 @@ namespace ValidayServer.Network
                 AddressFamily.InterNetwork,
                 SocketType.Stream,
                 ProtocolType.Tcp);
+
+            _markerStartPacket = new byte[]
+            {
+                1,
+                2,
+                3
+            };
         }
 
         /// <summary>
@@ -280,7 +291,7 @@ namespace ValidayServer.Network
         /// <summary>
         /// <inheritdoc/>
         /// </summary>
-        public virtual void DisconnectClient(IClient client)
+        public virtual void DisconnectClient(IClient? client)
         {
             OnClientDisconnect(client);
         }
@@ -295,7 +306,7 @@ namespace ValidayServer.Network
                 .AsReadOnly();
         }
 
-        private void OnClientDisconnect(IClient client)
+        private void OnClientDisconnect(IClient? client)
         {
             if (client == null)
                 return;
@@ -374,20 +385,16 @@ namespace ValidayServer.Network
 
                 if (bytesRead > 0)
                 {
-                    byte[] rawData = new byte[bytesRead];
+                    byte[] receivedData = new byte[bytesRead];
 
                     Array.Copy(
                         _buffer, 
-                        rawData, 
+                        receivedData, 
                         bytesRead);
 
-                    OnRecivedData?.Invoke(
+                    ProcessReceivedData(
                         client, 
-                        rawData);
-
-                    _logger?.Log(
-                        $"Received data [{rawData.Length} bytes] from [{client?.Ip}:{client?.Port}]", 
-                        LogType.Low);
+                        receivedData);
 
                     clientSocket.BeginReceive(
                         _buffer, 
@@ -404,6 +411,8 @@ namespace ValidayServer.Network
             }
             catch (Exception exception)
             {
+                DisconnectClient(client);
+
                 if (!_hideSocketError)
                     _logger?.Log(
                         $"Receive data failed! {exception.Message}",
@@ -434,9 +443,113 @@ namespace ValidayServer.Network
                         $"Data sent to [{client?.Ip}:{client?.Port}] failed! {exception.Message}", 
                         LogType.Error);
 
-                if (client != null)
-                    OnClientDisconnect(client);
+                OnClientDisconnect(client);
             }
+        }
+
+        private void ProcessReceivedData(
+            IClient? client, 
+            byte[] receivedData,
+            int depth = 0)
+        {
+            if (client == null)
+                return;
+
+            int startMarkerIndex = FindSequence(
+                receivedData, 
+                _markerStartPacket);
+
+            if (startMarkerIndex != -1)
+            {
+                if (receivedData.Length >= startMarkerIndex + _markerStartPacket.Length + sizeof(int))
+                {
+                    byte[] sizeIndicator = new byte[sizeof(int)];
+
+                    Array.Copy(
+                        receivedData, 
+                        startMarkerIndex + _markerStartPacket.Length, 
+                        sizeIndicator, 
+                        0, 
+                        sizeof(int));
+
+                    int packetSize = BitConverter.ToInt32(
+                        sizeIndicator, 
+                        0);
+
+                    if (receivedData.Length >= startMarkerIndex + _markerStartPacket.Length + sizeof(int) + packetSize)
+                    {
+                        byte[] packetData = new byte[packetSize];
+
+                        Array.Copy(
+                            receivedData, 
+                            startMarkerIndex + _markerStartPacket.Length + sizeof(int), 
+                            packetData, 
+                            0, 
+                            packetSize);
+
+                        OnRecivedData?.Invoke(
+                            client,
+                            packetData);
+
+                        _logger?.Log(
+                            $"Received data [{packetSize} bytes] from [{client?.Ip}:{client?.Port}]",
+                            LogType.Low);
+
+                        byte[] remainingData = new byte[receivedData.Length - (startMarkerIndex + _markerStartPacket.Length + sizeof(int) + packetSize)];
+
+                        Array.Copy(
+                            receivedData, 
+                            startMarkerIndex + _markerStartPacket.Length + sizeof(int) + packetSize, 
+                            remainingData, 
+                            0, 
+                            remainingData.Length);
+
+                        if (remainingData.Length > 0)
+                        {
+                            if (depth < _maxDepthReadPacket)
+                            {
+                                ProcessReceivedData(
+                                    client,
+                                    remainingData,
+                                    depth++);
+                            }
+                            else
+                            {
+                                _logger?.Log(
+                                    $"Client [{client?.Ip}:{client?.Port}]: Packet read depth exceeded!",
+                                    LogType.Warning);
+
+                                DisconnectClient(client);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        private int FindSequence(
+            byte[] data, 
+            byte[] sequence)
+        {
+            for (int i = 0; i <= data.Length - sequence.Length; i++)
+            {
+                bool found = true;
+
+                for (int j = 0; j < sequence.Length; j++)
+                {
+                    if (data[i + j] != sequence[j])
+                    {
+                        found = false;
+
+                        break;
+                    }
+                }
+
+                if (found)
+                    return i;
+            }
+
+            return -1;
         }
     }
 }
