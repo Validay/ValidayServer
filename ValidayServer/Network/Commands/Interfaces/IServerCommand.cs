@@ -12,7 +12,7 @@ namespace ValidayServer.Network.Commands.Interfaces
         /// <summary>
         /// Id server command
         /// </summary>
-        short Id { get; }
+        ushort Id { get; }
 
         /// <summary>
         /// Executed this server command

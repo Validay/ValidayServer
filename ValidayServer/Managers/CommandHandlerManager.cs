@@ -28,14 +28,14 @@ namespace ValidayServer.Managers
         /// <summary>
         /// Get all server commands
         /// </summary>
-        public IReadOnlyDictionary<short, Type> ServerCommandsMap
+        public IReadOnlyDictionary<ushort, Type> ServerCommandsMap
         {
             get => _serverCommandsMap.ToDictionary(
                 command => command.Key,
                 command => command.Value);
         }
 
-        private Dictionary<short, Type> _serverCommandsMap;
+        private Dictionary<ushort, Type> _serverCommandsMap;
         private IServer? _server;
         private ILogger? _logger;
 
@@ -43,14 +43,14 @@ namespace ValidayServer.Managers
         /// Default constructor
         /// </summary>
         public CommandHandlerManager() 
-            : this(new Dictionary<short, Type>())
+            : this(new Dictionary<ushort, Type>())
         { }
 
         /// <summary>
         /// Constructor with explicit parameters
         /// </summary>
         /// <param name="serverCommandsMap">Server commands</param>
-        public CommandHandlerManager(Dictionary<short, Type> serverCommandsMap)
+        public CommandHandlerManager(Dictionary<ushort, Type> serverCommandsMap)
         {
             _serverCommandsMap = serverCommandsMap;
         }
@@ -83,7 +83,7 @@ namespace ValidayServer.Managers
                         && !type.IsInterface)
                     {
                         object? serverCommand = Activator.CreateInstance(type);
-                        short id = ((IServerCommand)serverCommand).Id;
+                        ushort id = ((IServerCommand)serverCommand).Id;
 
                         if (serverCommand != null)
                             _serverCommandsMap.Add(
@@ -141,7 +141,7 @@ namespace ValidayServer.Managers
             if (_server == null)
                 return;
 
-            short commandId = BitConverter.ToInt16(data, 0);
+            ushort commandId = BitConverter.ToUInt16(data, 0);
 
             if (_serverCommandsMap.TryGetValue(
                 commandId, 

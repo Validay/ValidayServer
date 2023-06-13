@@ -5,11 +5,16 @@ using ValidayServer.Network.Interfaces;
 
 namespace ValidayServerSample.Network.Commands.ServerCommand
 {
+    /// <summary>
+    /// A simple command to convert the received data to a string 
+    /// and display it in the console
+    /// </summary>
     public class SimpleMessageCommand : IServerCommand
     {
-        public short Id => 1;
-
-        private const int countHeadBytes = 2;
+        /// <summary>
+        /// <inheritdoc/>
+        /// </summary>
+        public ushort Id => 1;
 
         /// <summary>
         /// <inheritdoc/>
@@ -21,8 +26,8 @@ namespace ValidayServerSample.Network.Commands.ServerCommand
         {
             string stringData = Encoding.UTF8.GetString(
                 rawData,
-                countHeadBytes,
-                rawData.Length - countHeadBytes);
+                sizeof(short),
+                rawData.Length - sizeof(short));
 
             Console.WriteLine($"Client [{sender.Ip}:{sender.Port}]: {stringData}");
         }
