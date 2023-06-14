@@ -108,44 +108,53 @@ namespace ValidayServer.Managers
 
         private void AddNewClient(IClient client)
         {
-            _countBadPacketClients.Add(client, 0);
+            lock (_countBadPacketClients)
+            {
+                _countBadPacketClients.Add(client, 0);
+            }
         }
 
         private void RemoveClient(IClient client)
         {
-            _countBadPacketClients.Remove(client);
+            lock (_countBadPacketClients)
+            {
+                _countBadPacketClients.Remove(client);
+            }
         }
 
         private void OnReceivedData(
             IClient client, 
             byte[] rawData)
         {
-            CommandHandlerManager? commandHandler = _server?.Managers
+            lock (_countBadPacketClients)
+            {
+                CommandHandlerManager? commandHandler = _server?.Managers
                 .ToList()
                 .FirstOrDefault(manager => manager.GetType() == typeof(CommandHandlerManager))
                     as CommandHandlerManager;
 
-            if (commandHandler != null)
-            {
-                ushort commandId = BitConverter.ToUInt16(rawData, 0);
-
-                if (!commandHandler.ServerCommandsMap.ContainsKey(commandId))
+                if (commandHandler != null)
                 {
-                    _countBadPacketClients[client]++;
+                    ushort commandId = BitConverter.ToUInt16(rawData, 0);
 
-                    _logger?.Log(
-                       $"Client [{client.Ip}:{client.Port}] sended bad packet!" +
-                       $"\nCommand [id = {commandId}] not founded!",
-                       LogType.Low);
-                }
+                    if (!commandHandler.ServerCommandsMap.ContainsKey(commandId))
+                    {
+                        _countBadPacketClients[client]++;
 
-                if (_countBadPacketClients[client] >= _countBadPacketForDisconnect)
-                {
-                    _server?.DisconnectClient(client);
+                        _logger?.Log(
+                           $"Client [{client.Ip}:{client.Port}] sended bad packet!" +
+                           $"\nCommand [id = {commandId}] not founded!",
+                           LogType.Low);
+                    }
 
-                    _logger?.Log(
-                       $"Сlient [{client.Ip}:{client.Port}] exceeded the number of bad packets and was disconnected!",
-                       LogType.Warning);
+                    if (_countBadPacketClients[client] >= _countBadPacketForDisconnect)
+                    {
+                        _server?.DisconnectClient(client);
+
+                        _logger?.Log(
+                            $"Сlient [{client.Ip}:{client.Port}] exceeded the number of bad packets and was disconnected!",
+                            LogType.Warning);
+                    }
                 }
             }
         }

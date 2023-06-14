@@ -8,6 +8,7 @@ using ValidayServer.Network.Interfaces;
 using ValidayServer.Logging.Interfaces;
 using ValidayServer.Logging;
 using ValidayServer.Managers.Interfaces;
+using System.Collections.Concurrent;
 
 namespace ValidayServer.Network
 {
@@ -301,9 +302,10 @@ namespace ValidayServer.Network
         /// </summary>
         public virtual ReadOnlyCollection<IClient> GetAllConnections()
         {
-            return _clients
-                .ToList()
-                .AsReadOnly();
+            lock (_clients)
+            {
+                return new ReadOnlyCollection<IClient>(_clients);
+            }
         }
 
         private void OnClientDisconnect(IClient? client)
@@ -317,8 +319,15 @@ namespace ValidayServer.Network
                 client.Socket.Dispose();
                 OnClientDisconnected?.Invoke(client);
 
-                if (client != null)
-                    _clients.Remove(client);
+                lock (_clients)
+                {
+                    if (client != null)
+                        _clients.Remove(client);
+
+                    for (int i = 0; i < _clients.Count; i++)
+                        if (_clients[i] == null)
+                            _clients.RemoveAt(i);
+                }
 
                 _logger?.Log(
                     $"Client [{client?.Ip}:{client?.Port}] disconnected!",
@@ -331,18 +340,26 @@ namespace ValidayServer.Network
                         $"{exception.Message}",
                         LogType.Error);
 
-                _clients.Remove(client);
+                lock (_clients)
+                {
+                    _clients.Remove(client);
+                }
             }
         }
 
         private void OnClientConnect(IAsyncResult asyncResult)
         {
-            Socket clientSocket = _serverSocket.EndAccept(asyncResult);
-            IClient client = _clientFactory.CreateClient(clientSocket);
+            IClient? client = null;
 
             try
             {
-                _clients.Add(client);
+                Socket clientSocket = _serverSocket.EndAccept(asyncResult);
+                client = _clientFactory.CreateClient(clientSocket);
+
+                lock (_clients)
+                {
+                    _clients.Add(client);
+                }
 
                 _serverSocket.BeginAccept(
                     new AsyncCallback(OnClientConnect), 
@@ -366,7 +383,7 @@ namespace ValidayServer.Network
             {
                 if (!_hideSocketError)
                     _logger?.Log(
-                        $"Client [{client?.Ip}:{client?.Port}] connect failed! {exception.Message}", 
+                        $"Client [{client?.Ip}:{client?.Port}] connect failed! {exception.Message}",
                         LogType.Error);
             }
         }
@@ -374,7 +391,12 @@ namespace ValidayServer.Network
         private void OnDataReceived(IAsyncResult asyncResult)
         {
             Socket clientSocket = (Socket)asyncResult.AsyncState;
-            IClient client = _clients.FirstOrDefault(client => client.Socket == clientSocket);
+            IClient? client = null;
+
+            lock (_clients)
+            {
+                client = _clients.FirstOrDefault(client => client?.Socket == clientSocket);
+            }
 
             if (client == null)
                 return;
@@ -400,11 +422,6 @@ namespace ValidayServer.Network
                     {
                         while (bytesRead > 0)
                         {
-                            Array.Copy(
-                                _buffer,
-                                receivedData,
-                                bytesRead);
-
                             ProcessReceivedData(
                                 client,
                                 receivedData);
@@ -442,7 +459,12 @@ namespace ValidayServer.Network
         private void OnDataSent(IAsyncResult asyncResult)
         {
             Socket clientSocket = (Socket)asyncResult.AsyncState;
-            IClient client = _clients.FirstOrDefault(client => client.Socket == clientSocket);
+            IClient? client = null;
+
+            lock (_clients)
+            {
+                client = _clients.FirstOrDefault(client => client?.Socket == clientSocket);
+            }
 
             if (client == null)
                 return;
