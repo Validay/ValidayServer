@@ -6,7 +6,6 @@ using ValidayServer.Network.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Collections.ObjectModel;
 
 namespace ValidayServer.Managers
 {
@@ -42,7 +41,7 @@ namespace ValidayServer.Managers
         /// <summary>
         /// Default constructor
         /// </summary>
-        public CommandHandlerManager() 
+        public CommandHandlerManager()
             : this(new Dictionary<ushort, Type>())
         { }
 
@@ -61,7 +60,7 @@ namespace ValidayServer.Managers
         public virtual void Initialize(
             IServer server,
             ILogger logger)
-        {            
+        {
             _server = server;
             _logger = logger;
 
@@ -149,10 +148,9 @@ namespace ValidayServer.Managers
                 if (commandType == null)
                     return;
 
-                var command = Activator.CreateInstance(commandType) 
+                var command = Activator.CreateInstance(commandType)
                     as IServerCommand;
 
-                //Пул команд, иначе стековерфлоу может быть!!!!!!!!!!!!!!!!
                 command?.Execute(
                     sender,
                     _server.Managers,
