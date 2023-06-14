@@ -380,7 +380,7 @@ namespace ValidayServer.Network
                 return;
 
             try
-            {               
+            {
                 int bytesRead = clientSocket.EndReceive(asyncResult);
 
                 if (bytesRead > 0)
@@ -396,13 +396,32 @@ namespace ValidayServer.Network
                         client, 
                         receivedData);
 
-                    clientSocket.BeginReceive(
-                        _buffer, 
-                        0, 
-                        _buffer.Length, 
-                        SocketFlags.None, 
-                        new AsyncCallback(OnDataReceived), 
-                        clientSocket);
+                    if (asyncResult.CompletedSynchronously)
+                    {
+                        while (bytesRead > 0)
+                        {
+                            Array.Copy(
+                                _buffer,
+                                receivedData,
+                                bytesRead);
+
+                            ProcessReceivedData(
+                                client,
+                                receivedData);
+
+                            bytesRead = clientSocket.Receive(_buffer);
+                        }
+                    }
+                    else
+                    {
+                        clientSocket.BeginReceive(
+                            _buffer,
+                            0,
+                            _buffer.Length,
+                            SocketFlags.None,
+                            new AsyncCallback(OnDataReceived),
+                            clientSocket);
+                    }
                 }
                 else
                 {
