@@ -14,7 +14,7 @@
 <pre>
 ServerSettings settings = new ServerSettings
 {
-    IP="127.0.0.1",
+    IP = "127.0.0.1",
     BufferSize = 1024
     MaxConnection = 100
     Port = 8888,
