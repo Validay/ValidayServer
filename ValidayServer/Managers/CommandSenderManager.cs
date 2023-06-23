@@ -10,13 +10,12 @@ namespace ValidayServer.Managers
     /// <summary>
     /// Manager for send to clients command
     /// </summary>
-    /// <typeparam name="TId">Type id client command</typeparam>
-    public class CommandSenderManager<TId> : IManager
+    public class CommandSenderManager : IManager
     {
         /// <summary>
         /// <inheritdoc/>
         /// </summary>
-        public string Name { get => nameof(CommandSenderManager<TId>); }
+        public string Name { get => nameof(CommandSenderManager); }
 
         /// <summary>
         /// <inheritdoc/>
@@ -37,10 +36,10 @@ namespace ValidayServer.Managers
             _logger = logger;
 
             if (_server == null)
-                throw new NullReferenceException($"{nameof(CommandSenderManager<TId>)}: Server is null!");
+                throw new NullReferenceException($"{nameof(CommandSenderManager)}: Server is null!");
 
             if (_logger == null)
-                throw new NullReferenceException($"{nameof(CommandSenderManager<TId>)}: Logger is null!");
+                throw new NullReferenceException($"{nameof(CommandSenderManager)}: Logger is null!");
         }
 
         /// <summary>
@@ -51,7 +50,7 @@ namespace ValidayServer.Managers
             if (_server == null)
             {
                 _logger?.Log(
-                    $"{nameof(CommandSenderManager<TId>)}: _server is null!",
+                    $"{nameof(CommandSenderManager)}: _server is null!",
                     LogType.Warning);
 
                 return;
@@ -60,7 +59,7 @@ namespace ValidayServer.Managers
             IsActive = true;
 
             _logger?.Log(
-                $"{nameof(CommandSenderManager<TId>)} started!",
+                $"{nameof(CommandSenderManager)} started!",
                 LogType.Info);
         }
 
@@ -75,7 +74,7 @@ namespace ValidayServer.Managers
             IsActive = false;
 
             _logger?.Log(
-                 $"{nameof(CommandSenderManager<TId>)} stopped!",
+                 $"{nameof(CommandSenderManager)} stopped!",
                 LogType.Info);
         }
 
@@ -88,7 +87,7 @@ namespace ValidayServer.Managers
         public void SendData<T>(
             IClient target, 
             T data)
-            where T : IClientCommand<TId>
+            where T : IClientCommand
         {
             if (_server == null)
                 return;
