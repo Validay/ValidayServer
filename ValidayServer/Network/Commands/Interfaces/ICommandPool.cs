@@ -14,19 +14,21 @@ namespace ValidayServer.Network.Commands.Interfaces
         /// Get command from pool
         /// </summary>
         /// <param name="id"></param>
-        /// <param name="serverCommandsMap"></param>
+        /// <param name="commandsMap">Commands map</param>
         /// <returns>Command from pool</returns>
         public TCommand GetCommand(
             TId id,
-            IDictionary<TId, Type> serverCommandsMap);
+            IDictionary<TId, Type> commandsMap);
 
         /// <summary>
         /// Return command to pool
         /// </summary>
         /// <param name="id">Id command</param>
         /// <param name="command">Inctance command</param>
+        /// <param name="commandsMap">Commands map</param>
         void ReturnCommandToPool(
             TId id,
-            TCommand command);
+            TCommand command,
+            IDictionary<TId, Type> commandsMap);
     }
 }

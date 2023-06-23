@@ -45,6 +45,11 @@ namespace ValidayServer.Network
         public int MaxDepthReadPacket { get; set; }
 
         /// <summary>
+        /// Marker for detect start new packet
+        /// </summary>
+        public byte[] MarkerStartPacket { get; set; }
+
+        /// <summary>
         /// Factory for creating clients
         /// </summary>
         public IClientFactory ClientFactory { get; set; }
@@ -70,6 +75,12 @@ namespace ValidayServer.Network
             Port = 8888,
             ConnectingClientQueue = 10,
             MaxDepthReadPacket = 64,
+            MarkerStartPacket = new byte[]
+            {
+                1,
+                2,
+                3
+            },
             ClientFactory = new ClientFactory(),
             ManagerFactory = new ManagerFactory(),
             Logger = new ConsoleLogger(LogType.Info),
@@ -84,6 +95,7 @@ namespace ValidayServer.Network
         /// <param name="bufferSize">Buffer size</param>
         /// <param name="maxConnections">Maximum client connections</param>
         /// <param name="maxDepthReadPacket">Maximum depth for reading packet in client network stream</param>
+        /// <param name="markerStartPacket">Marker for detect start new packet</param>
         /// <param name="clientFactory">Factory for creating clients</param>
         /// <param name="managerFactory">Factory for creating managers</param>
         /// <param name="logger">Logger for server</param>
@@ -95,6 +107,7 @@ namespace ValidayServer.Network
             int bufferSize,
             int maxConnections,
             int maxDepthReadPacket,
+            byte[] markerStartPacket,
             IClientFactory clientFactory,
             IManagerFactory managerFactory,
             ILogger logger)
@@ -117,6 +130,7 @@ namespace ValidayServer.Network
             MaxDepthReadPacket = maxDepthReadPacket;
             BufferSize = bufferSize;
             MaxConnection = maxConnections;
+            MarkerStartPacket = markerStartPacket;
             ClientFactory = clientFactory;
             ManagerFactory = managerFactory;
             Logger = logger;              

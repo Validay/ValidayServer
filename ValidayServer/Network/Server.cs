@@ -8,7 +8,6 @@ using ValidayServer.Network.Interfaces;
 using ValidayServer.Logging.Interfaces;
 using ValidayServer.Logging;
 using ValidayServer.Managers.Interfaces;
-using System.Collections.Concurrent;
 
 namespace ValidayServer.Network
 {
@@ -94,19 +93,13 @@ namespace ValidayServer.Network
             _logger = serverSettings.Logger;
             _clientFactory = serverSettings.ClientFactory;
             _managerFactory = serverSettings.ManagerFactory;
+            _markerStartPacket = serverSettings.MarkerStartPacket;
             _clients = new List<IClient>();
             _managers = new List<IManager>();
             _serverSocket = new Socket(
                 AddressFamily.InterNetwork,
                 SocketType.Stream,
                 ProtocolType.Tcp);
-
-            _markerStartPacket = new byte[]
-            {
-                1,
-                2,
-                3
-            };
         }
 
         /// <summary>

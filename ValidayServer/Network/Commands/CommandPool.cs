@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using ValidayServer.Network.Commands.Interfaces;
 
 namespace ValidayServer.Network.Commands
@@ -10,15 +12,30 @@ namespace ValidayServer.Network.Commands
     /// <typeparam name="TId">Type id command</typeparam>
     /// <typeparam name="TCommand">Type command</typeparam>
     public class CommandPool<TId, TCommand> : ICommandPool<TId, TCommand>
+        where TCommand : class
     {
-        private readonly IDictionary<TId, TCommand> _commandPool;
+        private class CommandElement
+        {
+            public TId Id { get; set; }
+            public TCommand? Command { get; set; }
+
+            public CommandElement(
+                TId id, 
+                TCommand? command)
+            {
+                Id = id;
+                Command = command;
+            }
+        }
+
+        private readonly ConcurrentDictionary<Type, List<CommandElement>> _commandPool;
 
         /// <summary>
         /// Default constructor
         /// </summary>
         public CommandPool()
         {
-            _commandPool = new Dictionary<TId, TCommand>();
+            _commandPool = new ConcurrentDictionary<Type, List<CommandElement>>();
         }
 
         /// <summary>
@@ -27,25 +44,30 @@ namespace ValidayServer.Network.Commands
         /// <exception cref="KeyNotFoundException">When id command dont exist</exception>
         public TCommand GetCommand(
             TId id,
-            IDictionary<TId, Type> serverCommandsMap)
+            IDictionary<TId, Type> commandsMap)
         {
-            if (_commandPool.ContainsKey(id))
-            {
-                TCommand command = _commandPool[id];
-                _commandPool.Remove(id);
+            if (!commandsMap.ContainsKey(id))
+                throw new KeyNotFoundException($"Command with ID {id} not founded in server commands map.");
 
-                return command;
-            }
-            else if (serverCommandsMap.ContainsKey(id))
+            if (_commandPool.ContainsKey(commandsMap[id]))
             {
-                Type commandType = serverCommandsMap[id];
-                TCommand command = (TCommand)Activator.CreateInstance(commandType);
+                CommandElement commandElement = _commandPool[commandsMap[id]].FirstOrDefault(commandElement =>
+                {
+                    if (commandElement != null 
+                        && commandElement.Id != null)
+                        return commandElement.Id.Equals(id);
 
-                return command;
+                    return false;
+                });
+
+                return commandElement?.Command 
+                    ?? (TCommand)Activator.CreateInstance(commandsMap[id]);
             }
             else
             {
-                throw new KeyNotFoundException($"Command with ID {id} not found.");
+                _commandPool[commandsMap[id]] = new List<CommandElement>();
+
+                return (TCommand)Activator.CreateInstance(commandsMap[id]);
             }
         }
 
@@ -54,9 +76,20 @@ namespace ValidayServer.Network.Commands
         /// </summary>
         public void ReturnCommandToPool(
             TId id,
-            TCommand command)
+            TCommand command,
+            IDictionary<TId, Type> commandsMap)
         {
-            _commandPool[id] = command;
+            if (!commandsMap.ContainsKey(id))
+                throw new KeyNotFoundException($"Command with ID {id} not founded in server commands map.");
+
+            CommandElement commandElement = new CommandElement(
+                id, 
+                command);
+
+            if (!_commandPool.ContainsKey(commandsMap[id]))
+                _commandPool[commandsMap[id]] = new List<CommandElement>();
+
+            _commandPool[commandsMap[id]].Add(commandElement);
         }
     }
 }

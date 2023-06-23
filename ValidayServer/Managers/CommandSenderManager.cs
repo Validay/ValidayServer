@@ -92,7 +92,7 @@ namespace ValidayServer.Managers
             if (_server == null)
                 return;
 
-            byte[] rawData = data.GetRawData();
+            byte[] rawData = data.GetRawData(_server);
 
             _server.SendToClient(
                 target, 

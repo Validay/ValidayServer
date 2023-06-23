@@ -31,6 +31,7 @@ namespace ValidayServerTest
                 1024,
                 100,
                 64,
+                new byte[1],
                 new ClientFactory(),
                 new ManagerFactory(),
                 new ConsoleLogger(LogType.Info));
@@ -72,6 +73,7 @@ namespace ValidayServerTest
                     1024,
                     100,
                     64,
+                    new byte[1],
                     new ClientFactory(),
                     new ManagerFactory(),
                     new ConsoleLogger(LogType.Info));
@@ -86,6 +88,7 @@ namespace ValidayServerTest
                     1024,
                     100,
                     64,
+                    new byte[1],
                     new ClientFactory(),
                     new ManagerFactory(),
                     new ConsoleLogger(LogType.Info));
@@ -100,6 +103,7 @@ namespace ValidayServerTest
                     1024,
                     100,
                     64,
+                    new byte[1],
                     new ClientFactory(),
                     new ManagerFactory(),
                     new ConsoleLogger(LogType.Info));
@@ -114,6 +118,7 @@ namespace ValidayServerTest
                     1024,
                     100,
                     64,
+                    new byte[1],
                     new ClientFactory(),
                     new ManagerFactory(),
                     new ConsoleLogger(LogType.Info));
@@ -128,6 +133,7 @@ namespace ValidayServerTest
                     -1,
                     100,
                     64,
+                    new byte[1],
                     new ClientFactory(),
                     new ManagerFactory(),
                     new ConsoleLogger(LogType.Info));
@@ -142,6 +148,7 @@ namespace ValidayServerTest
                     1024,
                     -1,
                     64,
+                    new byte[1],
                     new ClientFactory(),
                     new ManagerFactory(),
                     new ConsoleLogger(LogType.Info));
@@ -156,6 +163,7 @@ namespace ValidayServerTest
                     1024,
                     100,
                     -1,
+                    new byte[1],
                     new ClientFactory(),
                     new ManagerFactory(),
                     new ConsoleLogger(LogType.Info));

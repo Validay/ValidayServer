@@ -3,11 +3,11 @@ using ValidayServer.Logging.Interfaces;
 using ValidayServer.Managers.Interfaces;
 using ValidayServer.Network.Commands.Interfaces;
 using ValidayServer.Network.Interfaces;
+using ValidayServer.Network.Commands;
+using ValidayServer.Network;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using ValidayServer.Network.Commands;
-using ValidayServer.Network;
 
 namespace ValidayServer.Managers
 {
@@ -37,7 +37,7 @@ namespace ValidayServer.Managers
         }
         
         private Dictionary<ushort, Type> _serverCommandsMap;
-        private ICommandPool<ushort, IServerCommand> _commandPool;
+        private ICommandPool<ushort, IServerCommand> _commandServerPool;
         private IConverterId<ushort> _converterId;
         private IServer? _server;
         private ILogger? _logger;
@@ -60,7 +60,7 @@ namespace ValidayServer.Managers
             Dictionary<ushort, Type> serverCommandsMap,
             IConverterId<ushort> converterId)
         {
-            _commandPool = new CommandPool<ushort, IServerCommand>();
+            _commandServerPool = new CommandPool<ushort, IServerCommand>();
             _serverCommandsMap = serverCommandsMap;
             _converterId = converterId;
         }
@@ -151,12 +151,19 @@ namespace ValidayServer.Managers
                 return;
 
             ushort commandId = _converterId.Convert(data);
-            IServerCommand command = _commandPool.GetCommand(commandId, _serverCommandsMap);
+            IServerCommand command = _commandServerPool.GetCommand(
+                commandId, 
+                _serverCommandsMap);
 
-            command?.Execute(
+            command.Execute(
                 sender,
                 _server.Managers,
                 data);
+
+            _commandServerPool.ReturnCommandToPool(
+                commandId, 
+                command,
+                _serverCommandsMap);
         }
     }
 }
