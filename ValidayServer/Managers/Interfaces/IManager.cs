@@ -19,15 +19,6 @@ namespace ValidayServer.Managers.Interfaces
         bool IsActive { get; }
 
         /// <summary>
-        /// Initialize this manager
-        /// </summary>
-        /// <param name="server">Server</param>
-        /// <param name="logger">Logger</param>
-        void Initialize(
-            IServer server, 
-            ILogger logger);
-
-        /// <summary>
         /// Starting this manager
         /// </summary>
         void Start();

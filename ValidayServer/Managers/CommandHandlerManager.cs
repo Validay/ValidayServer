@@ -45,8 +45,12 @@ namespace ValidayServer.Managers
         /// <summary>
         /// Default constructor
         /// </summary>
-        public CommandHandlerManager()
+        public CommandHandlerManager(
+            IServer server,
+            ILogger logger)
             : this(
+                  server,
+                  logger,
                   new Dictionary<ushort, Type>(),
                   new UshortConverterId())
         { }
@@ -54,24 +58,19 @@ namespace ValidayServer.Managers
         /// <summary>
         /// Constructor with explicit parameters
         /// </summary>
+        /// <param name="server">Instance server when register this manager</param>
+        /// <param name="logger">Instance logger fot this manager</param>
         /// <param name="serverCommandsMap">Server commands</param>
         /// <param name="converterId">Converter id from bytes</param>
         public CommandHandlerManager(
+            IServer server,
+            ILogger logger,
             Dictionary<ushort, Type> serverCommandsMap,
             IConverterId<ushort> converterId)
         {
             _commandServerPool = new CommandPool<ushort, IServerCommand>();
             _serverCommandsMap = serverCommandsMap;
             _converterId = converterId;
-        }
-
-        /// <summary>
-        /// <inheritdoc/>
-        /// </summary>
-        public virtual void Initialize(
-            IServer server,
-            ILogger logger)
-        {
             _server = server;
             _logger = logger;
 
@@ -80,6 +79,8 @@ namespace ValidayServer.Managers
 
             if (_logger == null)
                 throw new NullReferenceException($"{nameof(CommandHandlerManager)}: Logger is null!");
+
+            _server.RegistrationManager(this);
         }
 
         /// <summary>

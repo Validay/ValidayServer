@@ -28,7 +28,7 @@ namespace ValidayServer.Managers
         /// <summary>
         /// <inheritdoc/>
         /// </summary>
-        public virtual void Initialize(
+        public CommandSenderManager(
             IServer server,
             ILogger logger)
         {            
@@ -40,6 +40,8 @@ namespace ValidayServer.Managers
 
             if (_logger == null)
                 throw new NullReferenceException($"{nameof(CommandSenderManager)}: Logger is null!");
+
+            _server.RegistrationManager(this);
         }
 
         /// <summary>
@@ -92,7 +94,7 @@ namespace ValidayServer.Managers
             if (_server == null)
                 return;
 
-            byte[] rawData = data.GetRawData(_server);
+            byte[] rawData = data.GetRawData();
 
             _server.SendToClient(
                 target, 

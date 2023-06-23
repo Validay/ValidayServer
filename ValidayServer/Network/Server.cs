@@ -63,7 +63,6 @@ namespace ValidayServer.Network
         private IList<IManager> _managers;
         private ILogger _logger;
         private IClientFactory _clientFactory;
-        private IManagerFactory _managerFactory;
 
         private readonly byte[] _markerStartPacket;
 
@@ -92,7 +91,6 @@ namespace ValidayServer.Network
             _buffer = new byte[serverSettings.BufferSize];
             _logger = serverSettings.Logger;
             _clientFactory = serverSettings.ClientFactory;
-            _managerFactory = serverSettings.ManagerFactory;
             _markerStartPacket = serverSettings.MarkerStartPacket;
             _clients = new List<IClient>();
             _managers = new List<IManager>();
@@ -100,40 +98,6 @@ namespace ValidayServer.Network
                 AddressFamily.InterNetwork,
                 SocketType.Stream,
                 ProtocolType.Tcp);
-        }
-
-        /// <summary>
-        /// <inheritdoc/>
-        /// </summary>
-        public virtual void RegistrationManager<T>()
-            where T : IManager
-        {
-            try
-            {
-                IManager newManager = _managerFactory.CreateManager<T>();
-                bool hasExisting = _managers.FirstOrDefault(manager => manager.Name == newManager.Name) != null;
-
-                if (hasExisting)
-                {
-                    _logger?.Log(
-                        $"Registration manager failed! Manager [{newManager.Name}] already registration!",
-                        LogType.Warning);
-
-                    return;
-                }
-
-                newManager.Initialize(
-                    this, 
-                    _logger);
-
-                _managers.Add(newManager);
-            }
-            catch (Exception exception)
-            {
-                _logger?.Log(
-                    $"Registration manager failed! {exception.Message}",
-                    LogType.Error);
-            }
         }
 
         /// <summary>
@@ -152,10 +116,6 @@ namespace ValidayServer.Network
 
                 throw new InvalidOperationException($"Registration manager failed! Manager [{manager.Name}] already registration!");
             }
-
-            manager.Initialize(
-                this,
-                _logger);
 
             _managers.Add(manager);
         }

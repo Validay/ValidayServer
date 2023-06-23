@@ -33,8 +33,12 @@ namespace ValidayServer.Managers
         /// <summary>
         /// Default constructor
         /// </summary>
-        public BadPacketDefenderManager() 
+        public BadPacketDefenderManager(
+            IServer server,
+            ILogger logger) 
             : this(
+                  server,
+                  logger,
                   10, 
                   new UshortConverterId())
         { }
@@ -42,24 +46,19 @@ namespace ValidayServer.Managers
         /// <summary>
         /// Constructor with explicit parameters
         /// </summary>
+        /// <param name="server">Instance server when register this manager</param>
+        /// <param name="logger">Instance logger fot this manager</param>
         /// <param name="countBadPacketForDisconnect">Count bad packet for disconnect client</param>
-        /// /// <param name="converterId">Converter id from bytes</param>
+        /// <param name="converterId">Converter id from bytes</param>
         public BadPacketDefenderManager(
+            IServer server,
+            ILogger logger,
             int countBadPacketForDisconnect, 
             IConverterId<ushort> converterId)
         {
             _countBadPacketClients = new Dictionary<IClient, int>();
             _countBadPacketForDisconnect = countBadPacketForDisconnect;
             _converterId = converterId;
-        }
-
-        /// <summary>
-        /// <inheritdoc/>
-        /// </summary>
-        public void Initialize(
-            IServer server,
-            ILogger logger)
-        {
             _server = server;
             _logger = logger;
 
@@ -68,6 +67,8 @@ namespace ValidayServer.Managers
 
             if (_logger == null)
                 throw new NullReferenceException($"{nameof(BadPacketDefenderManager)}: Logger is null!");
+
+            _server.RegistrationManager(this);
         }
 
         /// <summary>

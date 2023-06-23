@@ -6,6 +6,8 @@ using ValidayServer.Managers;
 using ValidayServer.Network.Commands;
 using ValidayServer.Network;
 using System.Net.Sockets;
+using ValidayServer.Logging.Interfaces;
+using ValidayServer.Logging;
 
 namespace ValidayServerTest
 {
@@ -34,7 +36,12 @@ namespace ValidayServerTest
         [Fact]
         public void RegistrationCommandSuccess()
         {
-            CommandHandlerManager commandHandler = new CommandHandlerManager();
+            IServer server = new Server();
+            ILogger logger = new ConsoleLogger(LogType.Info);
+
+            CommandHandlerManager commandHandler = new CommandHandlerManager(
+                server,
+                logger);
 
             commandHandler.RegistrationCommand<TestServerCommandOne>(1);
 
@@ -50,7 +57,12 @@ namespace ValidayServerTest
         {
             Assert.Throws<InvalidOperationException>(() => 
             {
-                CommandHandlerManager commandHandler = new CommandHandlerManager();
+                IServer server = new Server();
+                ILogger logger = new ConsoleLogger(LogType.Info);
+
+                CommandHandlerManager commandHandler = new CommandHandlerManager(
+                    server,
+                    logger);
 
                 commandHandler.RegistrationCommand<TestServerCommandOne>(1);
                 commandHandler.RegistrationCommand<TestServerCommandOne>(2);
@@ -62,7 +74,12 @@ namespace ValidayServerTest
         {
             Assert.Throws<InvalidOperationException>(() =>
             {
-                CommandHandlerManager commandHandler = new CommandHandlerManager();
+                IServer server = new Server();
+                ILogger logger = new ConsoleLogger(LogType.Info);
+
+                CommandHandlerManager commandHandler = new CommandHandlerManager(
+                    server,
+                    logger);
 
                 commandHandler.RegistrationCommand<TestServerCommandOne>(1);
                 commandHandler.RegistrationCommand<TestServerCommandTwo>(1);

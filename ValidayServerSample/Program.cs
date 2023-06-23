@@ -1,23 +1,24 @@
 ﻿using ValidayServer.Network;
 using ValidayServer.Managers;
 using ValidayServer.Network.Interfaces;
-using ValidayServerSample.Managers;
 using ValidayServerSample.Network.Commands.ServerCommands;
+using ValidayServer.Logging.Interfaces;
+using ValidayServer.Logging;
 
 namespace ValidayServerSample
 {
     public class Program
     {
         static void Main(string[] args)
-        {
+        {         
             IServer server = new Server();
-            CommandHandlerManager commandHandler = new CommandHandlerManager();
+            ILogger logger = new ConsoleLogger(LogType.Info);
+
+            CommandHandlerManager commandHandler = new CommandHandlerManager(
+                server, 
+                logger);
 
             commandHandler.RegistrationCommand<SimpleMessageServerCommand>(1);
-
-            server.RegistrationManager(commandHandler);
-            server.RegistrationManager<BadPacketDefenderManager>();
-            server.RegistrationManager<ConsoleInfoManager>();
 
             server.Start();
 
