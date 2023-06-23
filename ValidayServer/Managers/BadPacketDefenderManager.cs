@@ -5,6 +5,7 @@ using ValidayServer.Network.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using ValidayServer.Network;
 
 namespace ValidayServer.Managers
 {
@@ -25,6 +26,7 @@ namespace ValidayServer.Managers
 
         private Dictionary<IClient, int> _countBadPacketClients;
         private int _countBadPacketForDisconnect;
+        private IConverterId<ushort> _converterId;
         private IServer? _server;
         private ILogger? _logger;
 
@@ -32,17 +34,23 @@ namespace ValidayServer.Managers
         /// Default constructor
         /// </summary>
         public BadPacketDefenderManager() 
-            : this(10)
+            : this(
+                  10, 
+                  new UshortConverterId())
         { }
 
         /// <summary>
         /// Constructor with explicit parameters
         /// </summary>
         /// <param name="countBadPacketForDisconnect">Count bad packet for disconnect client</param>
-        public BadPacketDefenderManager(int countBadPacketForDisconnect)
+        /// /// <param name="converterId">Converter id from bytes</param>
+        public BadPacketDefenderManager(
+            int countBadPacketForDisconnect, 
+            IConverterId<ushort> converterId)
         {
             _countBadPacketClients = new Dictionary<IClient, int>();
             _countBadPacketForDisconnect = countBadPacketForDisconnect;
+            _converterId = converterId;
         }
 
         /// <summary>
@@ -135,7 +143,7 @@ namespace ValidayServer.Managers
 
                 if (commandHandler != null)
                 {
-                    ushort commandId = BitConverter.ToUInt16(rawData, 0);
+                    ushort commandId = _converterId.Convert(rawData);
 
                     if (!commandHandler.ServerCommandsMap.ContainsKey(commandId))
                     {

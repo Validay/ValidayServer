@@ -6,6 +6,8 @@ using ValidayServer.Network.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using ValidayServer.Network.Commands;
+using ValidayServer.Network;
 
 namespace ValidayServer.Managers
 {
@@ -33,8 +35,10 @@ namespace ValidayServer.Managers
                 command => command.Key,
                 command => command.Value);
         }
-
+        
         private Dictionary<ushort, Type> _serverCommandsMap;
+        private ICommandPool<ushort, IServerCommand> _commandPool;
+        private IConverterId<ushort> _converterId;
         private IServer? _server;
         private ILogger? _logger;
 
@@ -42,16 +46,23 @@ namespace ValidayServer.Managers
         /// Default constructor
         /// </summary>
         public CommandHandlerManager()
-            : this(new Dictionary<ushort, Type>())
+            : this(
+                  new Dictionary<ushort, Type>(),
+                  new UshortConverterId())
         { }
 
         /// <summary>
         /// Constructor with explicit parameters
         /// </summary>
         /// <param name="serverCommandsMap">Server commands</param>
-        public CommandHandlerManager(Dictionary<ushort, Type> serverCommandsMap)
+        /// <param name="converterId">Converter id from bytes</param>
+        public CommandHandlerManager(
+            Dictionary<ushort, Type> serverCommandsMap,
+            IConverterId<ushort> converterId)
         {
+            _commandPool = new CommandPool<ushort, IServerCommand>();
             _serverCommandsMap = serverCommandsMap;
+            _converterId = converterId;
         }
 
         /// <summary>
@@ -139,23 +150,13 @@ namespace ValidayServer.Managers
             if (_server == null)
                 return;
 
-            ushort commandId = BitConverter.ToUInt16(data, 0);
+            ushort commandId = _converterId.Convert(data);
+            IServerCommand command = _commandPool.GetCommand(commandId, _serverCommandsMap);
 
-            if (_serverCommandsMap.TryGetValue(
-                commandId, 
-                out Type commandType))
-            {
-                if (commandType == null)
-                    return;
-
-                var command = Activator.CreateInstance(commandType)
-                    as IServerCommand;
-
-                command?.Execute(
-                    sender,
-                    _server.Managers,
-                    data);
-            }
+            command?.Execute(
+                sender,
+                _server.Managers,
+                data);
         }
     }
 }

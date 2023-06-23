@@ -3,12 +3,13 @@
     /// <summary>
     /// Interface client command
     /// </summary>
-    public interface IClientCommand
+    /// <typeparam name="TId">Type id server command</typeparam>
+    public interface IClientCommand<TId>
     {
         /// <summary>
         /// Id client command
         /// </summary>
-        short Id { get; }
+        TId Id { get; }
 
         /// <summary>
         /// Get raw data this client command
