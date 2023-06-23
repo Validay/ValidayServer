@@ -24,7 +24,7 @@ namespace ValidayServer.Network.Commands.Interfaces
         /// Return command to pool
         /// </summary>
         /// <param name="id">Id command</param>
-        /// <param name="command">Inctance command</param>
+        /// <param name="command">Instance command</param>
         /// <param name="commandsMap">Commands map</param>
         void ReturnCommandToPool(
             TId id,

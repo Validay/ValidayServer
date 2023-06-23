@@ -170,6 +170,19 @@ namespace ValidayServerTest
                     new ClientFactory(),
                     new ConsoleLogger(LogType.Info));
             });
+            Assert.Throws<FormatException>(() =>
+            {
+                ServerSettings serverSettings = new ServerSettings(
+                    "127.0.0.1",
+                    8888,
+                    10,
+                    1024,
+                    100,
+                    64,
+                    new byte[0],
+                    new ClientFactory(),
+                    new ConsoleLogger(LogType.Info));
+            });
         }
     }
 }

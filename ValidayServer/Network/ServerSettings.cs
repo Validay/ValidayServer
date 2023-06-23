@@ -110,6 +110,7 @@ namespace ValidayServer.Network
                 || logger == null
                 || port < 0
                 || port > 65535
+                || markerStartPacket.Length == 0
                 || !IsValidIpAddress(ip))
                 throw new FormatException($"{nameof(ServerSettings)} create failed! Invalid parameters");
 
