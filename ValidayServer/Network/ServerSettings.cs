@@ -3,8 +3,6 @@ using System.Net;
 using System.Net.Sockets;
 using ValidayServer.Logging;
 using ValidayServer.Logging.Interfaces;
-using ValidayServer.Managers;
-using ValidayServer.Managers.Interfaces;
 using ValidayServer.Network.Interfaces;
 
 namespace ValidayServer.Network

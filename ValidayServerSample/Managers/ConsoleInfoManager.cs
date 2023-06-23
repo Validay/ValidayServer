@@ -31,6 +31,9 @@ namespace ValidayServerSample.Managers
         /// <summary>
         /// Default constructor
         /// </summary>
+        /// <param name="server">Instance server where register this manager</param>
+        /// <param name="logger">Instance logger fot this manager</param>
+        /// <exception cref="NullReferenceException">Exception null parameters</exception>
         public ConsoleInfoManager(
             IServer server, 
             ILogger logger)
@@ -44,6 +47,8 @@ namespace ValidayServerSample.Managers
 
             if (_logger == null)
                 throw new NullReferenceException($"{nameof(ConsoleInfoManager)}: Logger is null!");
+
+            _server.RegistrationManager(this);
         }
 
         /// <summary>

@@ -2,10 +2,10 @@
 using ValidayServer.Logging.Interfaces;
 using ValidayServer.Managers.Interfaces;
 using ValidayServer.Network.Interfaces;
+using ValidayServer.Network;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using ValidayServer.Network;
 
 namespace ValidayServer.Managers
 {
@@ -46,10 +46,11 @@ namespace ValidayServer.Managers
         /// <summary>
         /// Constructor with explicit parameters
         /// </summary>
-        /// <param name="server">Instance server when register this manager</param>
+        /// <param name="server">Instance server where register this manager</param>
         /// <param name="logger">Instance logger fot this manager</param>
         /// <param name="countBadPacketForDisconnect">Count bad packet for disconnect client</param>
         /// <param name="converterId">Converter id from bytes</param>
+        /// <exception cref="NullReferenceException">Exception null parameters</exception>
         public BadPacketDefenderManager(
             IServer server,
             ILogger logger,

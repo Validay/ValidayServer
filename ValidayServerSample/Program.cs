@@ -4,6 +4,7 @@ using ValidayServer.Network.Interfaces;
 using ValidayServerSample.Network.Commands.ServerCommands;
 using ValidayServer.Logging.Interfaces;
 using ValidayServer.Logging;
+using ValidayServerSample.Managers;
 
 namespace ValidayServerSample
 {
@@ -13,6 +14,10 @@ namespace ValidayServerSample
         {         
             IServer server = new Server();
             ILogger logger = new ConsoleLogger(LogType.Info);
+
+            ConsoleInfoManager consoleInfoManager = new ConsoleInfoManager(
+                server,
+                logger);
 
             CommandHandlerManager commandHandler = new CommandHandlerManager(
                 server, 

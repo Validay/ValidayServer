@@ -26,8 +26,11 @@ namespace ValidayServer.Managers
         private ILogger? _logger;
 
         /// <summary>
-        /// <inheritdoc/>
+        /// Default constructor
         /// </summary>
+        /// <param name="server">Instance server where register this manager</param>
+        /// <param name="logger">Instance logger fot this manager</param>
+        /// <exception cref="NullReferenceException">Exception null parameters</exception>
         public CommandSenderManager(
             IServer server,
             ILogger logger)

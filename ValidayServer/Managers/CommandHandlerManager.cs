@@ -45,6 +45,8 @@ namespace ValidayServer.Managers
         /// <summary>
         /// Default constructor
         /// </summary>
+        /// <param name="server">Instance server where register this manager</param>
+        /// <param name="logger">Instance logger fot this manager</param>
         public CommandHandlerManager(
             IServer server,
             ILogger logger)
@@ -62,6 +64,7 @@ namespace ValidayServer.Managers
         /// <param name="logger">Instance logger fot this manager</param>
         /// <param name="serverCommandsMap">Server commands</param>
         /// <param name="converterId">Converter id from bytes</param>
+        /// <exception cref="NullReferenceException">Exception null parameters</exception>
         public CommandHandlerManager(
             IServer server,
             ILogger logger,
