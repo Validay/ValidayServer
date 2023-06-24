@@ -7,7 +7,7 @@
   ![GitHub last commit](https://img.shields.io/github/last-commit/Validay/ValidayServer)
 
 ## Roadmap:
-  - [ ] Caching commands
+  - [x] Caching commands
 
 ## How to use:
 ### 1. Create server settings
