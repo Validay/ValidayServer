@@ -3,8 +3,6 @@ using System.Net;
 using System.Net.Sockets;
 using ValidayServer.Logging;
 using ValidayServer.Logging.Interfaces;
-using ValidayServer.Managers;
-using ValidayServer.Managers.Interfaces;
 using ValidayServer.Network.Interfaces;
 
 namespace ValidayServer.Network
@@ -45,14 +43,14 @@ namespace ValidayServer.Network
         public int MaxDepthReadPacket { get; set; }
 
         /// <summary>
+        /// Marker for detect start new packet
+        /// </summary>
+        public byte[] MarkerStartPacket { get; set; }
+
+        /// <summary>
         /// Factory for creating clients
         /// </summary>
         public IClientFactory ClientFactory { get; set; }
-
-        /// <summary>
-        /// Factory for creating managers
-        /// </summary>
-        public IManagerFactory ManagerFactory { get; set; }
 
         /// <summary>
         /// Logger for server
@@ -70,8 +68,13 @@ namespace ValidayServer.Network
             Port = 8888,
             ConnectingClientQueue = 10,
             MaxDepthReadPacket = 64,
+            MarkerStartPacket = new byte[]
+            {
+                1,
+                2,
+                3
+            },
             ClientFactory = new ClientFactory(),
-            ManagerFactory = new ManagerFactory(),
             Logger = new ConsoleLogger(LogType.Info),
         };
 
@@ -84,8 +87,8 @@ namespace ValidayServer.Network
         /// <param name="bufferSize">Buffer size</param>
         /// <param name="maxConnections">Maximum client connections</param>
         /// <param name="maxDepthReadPacket">Maximum depth for reading packet in client network stream</param>
+        /// <param name="markerStartPacket">Marker for detect start new packet</param>
         /// <param name="clientFactory">Factory for creating clients</param>
-        /// <param name="managerFactory">Factory for creating managers</param>
         /// <param name="logger">Logger for server</param>
         /// <exception cref="FormatException">Invalid parameters</exception>
         public ServerSettings(
@@ -95,8 +98,8 @@ namespace ValidayServer.Network
             int bufferSize,
             int maxConnections,
             int maxDepthReadPacket,
+            byte[] markerStartPacket,
             IClientFactory clientFactory,
-            IManagerFactory managerFactory,
             ILogger logger)
         {
             if (bufferSize < 0
@@ -104,10 +107,10 @@ namespace ValidayServer.Network
                 || maxDepthReadPacket < 0
                 || maxConnections < 0
                 || clientFactory == null
-                || managerFactory == null
                 || logger == null
                 || port < 0
                 || port > 65535
+                || markerStartPacket.Length == 0
                 || !IsValidIpAddress(ip))
                 throw new FormatException($"{nameof(ServerSettings)} create failed! Invalid parameters");
 
@@ -117,8 +120,8 @@ namespace ValidayServer.Network
             MaxDepthReadPacket = maxDepthReadPacket;
             BufferSize = bufferSize;
             MaxConnection = maxConnections;
+            MarkerStartPacket = markerStartPacket;
             ClientFactory = clientFactory;
-            ManagerFactory = managerFactory;
             Logger = logger;              
         }
 

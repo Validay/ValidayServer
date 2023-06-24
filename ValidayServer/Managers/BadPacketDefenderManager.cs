@@ -2,6 +2,7 @@
 using ValidayServer.Logging.Interfaces;
 using ValidayServer.Managers.Interfaces;
 using ValidayServer.Network.Interfaces;
+using ValidayServer.Network;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,33 +26,40 @@ namespace ValidayServer.Managers
 
         private Dictionary<IClient, int> _countBadPacketClients;
         private int _countBadPacketForDisconnect;
+        private IConverterId<ushort> _converterId;
         private IServer? _server;
         private ILogger? _logger;
 
         /// <summary>
         /// Default constructor
         /// </summary>
-        public BadPacketDefenderManager() 
-            : this(10)
+        public BadPacketDefenderManager(
+            IServer server,
+            ILogger logger) 
+            : this(
+                  server,
+                  logger,
+                  10, 
+                  new UshortConverterId())
         { }
 
         /// <summary>
         /// Constructor with explicit parameters
         /// </summary>
+        /// <param name="server">Instance server where register this manager</param>
+        /// <param name="logger">Instance logger fot this manager</param>
         /// <param name="countBadPacketForDisconnect">Count bad packet for disconnect client</param>
-        public BadPacketDefenderManager(int countBadPacketForDisconnect)
+        /// <param name="converterId">Converter id from bytes</param>
+        /// <exception cref="NullReferenceException">Exception null parameters</exception>
+        public BadPacketDefenderManager(
+            IServer server,
+            ILogger logger,
+            int countBadPacketForDisconnect, 
+            IConverterId<ushort> converterId)
         {
             _countBadPacketClients = new Dictionary<IClient, int>();
             _countBadPacketForDisconnect = countBadPacketForDisconnect;
-        }
-
-        /// <summary>
-        /// <inheritdoc/>
-        /// </summary>
-        public void Initialize(
-            IServer server,
-            ILogger logger)
-        {
+            _converterId = converterId;
             _server = server;
             _logger = logger;
 
@@ -60,6 +68,8 @@ namespace ValidayServer.Managers
 
             if (_logger == null)
                 throw new NullReferenceException($"{nameof(BadPacketDefenderManager)}: Logger is null!");
+
+            _server.RegistrationManager(this);
         }
 
         /// <summary>
@@ -135,7 +145,7 @@ namespace ValidayServer.Managers
 
                 if (commandHandler != null)
                 {
-                    ushort commandId = BitConverter.ToUInt16(rawData, 0);
+                    ushort commandId = _converterId.Convert(rawData);
 
                     if (!commandHandler.ServerCommandsMap.ContainsKey(commandId))
                     {

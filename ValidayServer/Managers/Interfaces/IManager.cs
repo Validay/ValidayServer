@@ -1,7 +1,4 @@
-﻿using ValidayServer.Logging.Interfaces;
-using ValidayServer.Network.Interfaces;
-
-namespace ValidayServer.Managers.Interfaces
+﻿namespace ValidayServer.Managers.Interfaces
 {
     /// <summary>
     /// Main interface for manager
@@ -17,15 +14,6 @@ namespace ValidayServer.Managers.Interfaces
         /// Get active this manager
         /// </summary>
         bool IsActive { get; }
-
-        /// <summary>
-        /// Initialize this manager
-        /// </summary>
-        /// <param name="server">Server</param>
-        /// <param name="logger">Logger</param>
-        void Initialize(
-            IServer server, 
-            ILogger logger);
 
         /// <summary>
         /// Starting this manager

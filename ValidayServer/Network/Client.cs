@@ -33,8 +33,17 @@ namespace ValidayServer.Network
             IPEndPoint endPoint = (IPEndPoint)socket.RemoteEndPoint;
 
             Socket = socket;
-            Ip = endPoint.Address.ToString();
-            Port = endPoint.Port;
+
+            if (endPoint != null)
+            {
+                Ip = endPoint.Address.ToString();
+                Port = endPoint.Port;
+            }
+            else
+            {
+                Ip = "Unknown";
+                Port = 0;
+            }
         }
     }
 }

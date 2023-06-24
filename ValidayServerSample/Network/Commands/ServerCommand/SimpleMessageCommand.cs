@@ -3,12 +3,10 @@ using ValidayServer.Managers.Interfaces;
 using ValidayServer.Network.Commands.Interfaces;
 using ValidayServer.Network.Interfaces;
 
-namespace ValidayServerSample.Network.Commands.ServerCommand
+namespace ValidayServerSample.Network.Commands.ServerCommands
 {
-    public class SimpleMessageCommand : IServerCommand
+    public class SimpleMessageServerCommand : IServerCommand
     {
-        private const int countHeadBytes = 2;
-
         /// <summary>
         /// <inheritdoc/>
         /// </summary>
@@ -19,8 +17,8 @@ namespace ValidayServerSample.Network.Commands.ServerCommand
         {
             string stringData = Encoding.UTF8.GetString(
                 rawData,
-                countHeadBytes,
-                rawData.Length - countHeadBytes);
+                sizeof(ushort),
+                rawData.Length - sizeof(ushort));
 
             Console.WriteLine($"Client [{sender.Ip}:{sender.Port}]: {stringData}");
         }

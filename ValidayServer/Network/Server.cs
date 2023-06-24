@@ -8,7 +8,6 @@ using ValidayServer.Network.Interfaces;
 using ValidayServer.Logging.Interfaces;
 using ValidayServer.Logging;
 using ValidayServer.Managers.Interfaces;
-using System.Collections.Concurrent;
 
 namespace ValidayServer.Network
 {
@@ -64,7 +63,6 @@ namespace ValidayServer.Network
         private IList<IManager> _managers;
         private ILogger _logger;
         private IClientFactory _clientFactory;
-        private IManagerFactory _managerFactory;
 
         private readonly byte[] _markerStartPacket;
 
@@ -93,54 +91,13 @@ namespace ValidayServer.Network
             _buffer = new byte[serverSettings.BufferSize];
             _logger = serverSettings.Logger;
             _clientFactory = serverSettings.ClientFactory;
-            _managerFactory = serverSettings.ManagerFactory;
+            _markerStartPacket = serverSettings.MarkerStartPacket;
             _clients = new List<IClient>();
             _managers = new List<IManager>();
             _serverSocket = new Socket(
                 AddressFamily.InterNetwork,
                 SocketType.Stream,
                 ProtocolType.Tcp);
-
-            _markerStartPacket = new byte[]
-            {
-                1,
-                2,
-                3
-            };
-        }
-
-        /// <summary>
-        /// <inheritdoc/>
-        /// </summary>
-        public virtual void RegistrationManager<T>()
-            where T : IManager
-        {
-            try
-            {
-                IManager newManager = _managerFactory.CreateManager<T>();
-                bool hasExisting = _managers.FirstOrDefault(manager => manager.Name == newManager.Name) != null;
-
-                if (hasExisting)
-                {
-                    _logger?.Log(
-                        $"Registration manager failed! Manager [{newManager.Name}] already registration!",
-                        LogType.Warning);
-
-                    return;
-                }
-
-                newManager.Initialize(
-                    this, 
-                    _logger);
-
-                _managers.Add(newManager);
-            }
-            catch (Exception exception)
-            {
-                _logger?.Log(
-                    $"Registration manager failed! {exception.Message}",
-                    LogType.Error);
-            }
         }
 
         /// <summary>
@@ -159,10 +116,6 @@ namespace ValidayServer.Network
 
                 throw new InvalidOperationException($"Registration manager failed! Manager [{manager.Name}] already registration!");
             }
-
-            manager.Initialize(
-                this,
-                _logger);
 
             _managers.Add(manager);
         }

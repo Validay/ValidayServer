@@ -15,12 +15,11 @@
 ServerSettings settings = new ServerSettings
 {
     IP = "127.0.0.1",
-    BufferSize = 1024
+    BufferSize = 1024,
     MaxConnection = 100,
     Port = 8888,
     ConnectingClientQueue = 10,
     ClientFactory = new ClientFactory(),
-    ManagerFactory = new ManagerFactory(),
     Logger = new ConsoleLogger(LogType.Info),
 };
 </pre>
@@ -32,9 +31,12 @@ IServer server = new Server(
   true);
 </pre>
 
-### 3. Registration managers
+### 3. Create managers
 <pre>
-server.RegistrationManager&ltSomeManager>();
+ILogger logger = new ConsoleLogger(LogType.Info);
+CommandHandlerManager commandHandler = new CommandHandlerManager(
+  server, 
+  logger);
 </pre>
 
 ### 4. Start server!

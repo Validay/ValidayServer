@@ -3,6 +3,8 @@ using ValidayServer.Logging.Interfaces;
 using ValidayServer.Managers.Interfaces;
 using ValidayServer.Network.Commands.Interfaces;
 using ValidayServer.Network.Interfaces;
+using ValidayServer.Network.Commands;
+using ValidayServer.Network;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -33,34 +35,45 @@ namespace ValidayServer.Managers
                 command => command.Key,
                 command => command.Value);
         }
-
+        
         private Dictionary<ushort, Type> _serverCommandsMap;
+        private ICommandPool<ushort, IServerCommand> _commandServerPool;
+        private IConverterId<ushort> _converterId;
         private IServer? _server;
         private ILogger? _logger;
 
         /// <summary>
         /// Default constructor
         /// </summary>
-        public CommandHandlerManager()
-            : this(new Dictionary<ushort, Type>())
+        /// <param name="server">Instance server where register this manager</param>
+        /// <param name="logger">Instance logger fot this manager</param>
+        public CommandHandlerManager(
+            IServer server,
+            ILogger logger)
+            : this(
+                  server,
+                  logger,
+                  new Dictionary<ushort, Type>(),
+                  new UshortConverterId())
         { }
 
         /// <summary>
         /// Constructor with explicit parameters
         /// </summary>
+        /// <param name="server">Instance server when register this manager</param>
+        /// <param name="logger">Instance logger fot this manager</param>
         /// <param name="serverCommandsMap">Server commands</param>
-        public CommandHandlerManager(Dictionary<ushort, Type> serverCommandsMap)
-        {
-            _serverCommandsMap = serverCommandsMap;
-        }
-
-        /// <summary>
-        /// <inheritdoc/>
-        /// </summary>
-        public virtual void Initialize(
+        /// <param name="converterId">Converter id from bytes</param>
+        /// <exception cref="NullReferenceException">Exception null parameters</exception>
+        public CommandHandlerManager(
             IServer server,
-            ILogger logger)
+            ILogger logger,
+            Dictionary<ushort, Type> serverCommandsMap,
+            IConverterId<ushort> converterId)
         {
+            _commandServerPool = new CommandPool<ushort, IServerCommand>();
+            _serverCommandsMap = serverCommandsMap;
+            _converterId = converterId;
             _server = server;
             _logger = logger;
 
@@ -69,6 +82,8 @@ namespace ValidayServer.Managers
 
             if (_logger == null)
                 throw new NullReferenceException($"{nameof(CommandHandlerManager)}: Logger is null!");
+
+            _server.RegistrationManager(this);
         }
 
         /// <summary>
@@ -139,23 +154,20 @@ namespace ValidayServer.Managers
             if (_server == null)
                 return;
 
-            ushort commandId = BitConverter.ToUInt16(data, 0);
-
-            if (_serverCommandsMap.TryGetValue(
+            ushort commandId = _converterId.Convert(data);
+            IServerCommand command = _commandServerPool.GetCommand(
                 commandId, 
-                out Type commandType))
-            {
-                if (commandType == null)
-                    return;
+                _serverCommandsMap);
 
-                var command = Activator.CreateInstance(commandType)
-                    as IServerCommand;
+            command.Execute(
+                sender,
+                _server.Managers,
+                data);
 
-                command?.Execute(
-                    sender,
-                    _server.Managers,
-                    data);
-            }
+            _commandServerPool.ReturnCommandToPool(
+                commandId, 
+                command,
+                _serverCommandsMap);
         }
     }
 }

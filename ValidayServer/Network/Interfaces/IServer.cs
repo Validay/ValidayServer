@@ -41,13 +41,6 @@ namespace ValidayServer.Network.Interfaces
         event Action<IClient> OnClientDisconnected;
 
         /// <summary>
-        /// Registration new manager
-        /// </summary>
-        /// <typeparam name="T">Manager type</typeparam>
-        void RegistrationManager<T>()
-            where T : IManager;
-
-        /// <summary>
         /// Registration new instance manager
         /// </summary>
         /// <param name="manager">Instance manager</param>

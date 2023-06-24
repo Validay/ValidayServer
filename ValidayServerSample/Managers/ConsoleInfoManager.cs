@@ -29,15 +29,26 @@ namespace ValidayServerSample.Managers
         private ILogger? _logger;
 
         /// <summary>
-        /// <inheritdoc/>
+        /// Default constructor
         /// </summary>
-        public void Initialize(
+        /// <param name="server">Instance server where register this manager</param>
+        /// <param name="logger">Instance logger fot this manager</param>
+        /// <exception cref="NullReferenceException">Exception null parameters</exception>
+        public ConsoleInfoManager(
             IServer server, 
             ILogger logger)
         {
             _intervalUpdateInfoSeconds = 1f;
             _server = server;
             _logger = logger;
+
+            if (_server == null)
+                throw new NullReferenceException($"{nameof(ConsoleInfoManager)}: Server is null!");
+
+            if (_logger == null)
+                throw new NullReferenceException($"{nameof(ConsoleInfoManager)}: Logger is null!");
+
+            _server.RegistrationManager(this);
         }
 
         /// <summary>

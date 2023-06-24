@@ -26,9 +26,12 @@ namespace ValidayServer.Managers
         private ILogger? _logger;
 
         /// <summary>
-        /// <inheritdoc/>
+        /// Default constructor
         /// </summary>
-        public virtual void Initialize(
+        /// <param name="server">Instance server where register this manager</param>
+        /// <param name="logger">Instance logger fot this manager</param>
+        /// <exception cref="NullReferenceException">Exception null parameters</exception>
+        public CommandSenderManager(
             IServer server,
             ILogger logger)
         {            
@@ -40,6 +43,8 @@ namespace ValidayServer.Managers
 
             if (_logger == null)
                 throw new NullReferenceException($"{nameof(CommandSenderManager)}: Logger is null!");
+
+            _server.RegistrationManager(this);
         }
 
         /// <summary>
