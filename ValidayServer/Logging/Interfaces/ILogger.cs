@@ -10,7 +10,7 @@
         /// </summary>
         /// <param name="message">Log message</param>
         /// <param name="logType">Log level type</param>
-        public void Log(
+        void Log(
             string message, 
             LogType logType);
     }
