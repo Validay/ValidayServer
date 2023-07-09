@@ -51,10 +51,10 @@ namespace ValidayServer.Managers
             IServer server,
             ILogger logger)
             : this(
-                  server,
-                  logger,
-                  new Dictionary<ushort, Type>(),
-                  new UshortConverterId())
+                server: server,
+                logger: logger,
+                serverCommandsMap: new Dictionary<ushort, Type>(),
+                converterId: new UshortConverterId())
         { }
 
         /// <summary>

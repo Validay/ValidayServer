@@ -9,7 +9,7 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <ProduceReferenceAssembly>False</ProduceReferenceAssembly>
-    <Version>1.0.15</Version>
+    <Version>1.0.18</Version>
   </PropertyGroup>
 
   <ItemGroup>
