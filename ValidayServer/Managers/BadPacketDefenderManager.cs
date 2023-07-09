@@ -37,10 +37,10 @@ namespace ValidayServer.Managers
             IServer server,
             ILogger logger) 
             : this(
-                  server,
-                  logger,
-                  10, 
-                  new UshortConverterId())
+                server: server,
+                logger: logger,
+                countBadPacketForDisconnect: 10,
+                converterId: new UshortConverterId())
         { }
 
         /// <summary>
