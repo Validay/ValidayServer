@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
 using ValidayServer.Network.Commands.Interfaces;
 
 namespace ValidayServer.Network.Commands
@@ -28,14 +27,14 @@ namespace ValidayServer.Network.Commands
             }
         }
 
-        private readonly ConcurrentDictionary<Type, List<CommandElement>> _commandPool;
+        private readonly ConcurrentDictionary<Type, ConcurrentBag<CommandElement>> _commandPool;
 
         /// <summary>
         /// Default constructor
         /// </summary>
         public CommandPool()
         {
-            _commandPool = new ConcurrentDictionary<Type, List<CommandElement>>();
+            _commandPool = new ConcurrentDictionary<Type, ConcurrentBag<CommandElement>>();
         }
 
         /// <summary>
@@ -49,23 +48,17 @@ namespace ValidayServer.Network.Commands
             if (!commandsMap.ContainsKey(id))
                 throw new KeyNotFoundException($"Command with ID {id} not founded in server commands map.");
 
-            if (_commandPool.ContainsKey(commandsMap[id]))
+            if (_commandPool.ContainsKey(commandsMap[id])
+                && _commandPool.TryGetValue(commandsMap[id], out ConcurrentBag<CommandElement> commandElements))
             {
-                CommandElement commandElement = _commandPool[commandsMap[id]].FirstOrDefault(commandElement =>
-                {
-                    if (commandElement != null 
-                        && commandElement.Id != null)
-                        return commandElement.Id.Equals(id);
+                commandElements.TryTake(out CommandElement commandElement);
 
-                    return false;
-                });
-
-                return commandElement?.Command 
+                return commandElement?.Command
                     ?? (TCommand)Activator.CreateInstance(commandsMap[id]);
             }
             else
             {
-                _commandPool[commandsMap[id]] = new List<CommandElement>();
+                _commandPool.TryAdd(commandsMap[id], new ConcurrentBag<CommandElement>());
 
                 return (TCommand)Activator.CreateInstance(commandsMap[id]);
             }
@@ -87,7 +80,7 @@ namespace ValidayServer.Network.Commands
                 command);
 
             if (!_commandPool.ContainsKey(commandsMap[id]))
-                _commandPool[commandsMap[id]] = new List<CommandElement>();
+                _commandPool.TryAdd(commandsMap[id], new ConcurrentBag<CommandElement>());
 
             _commandPool[commandsMap[id]].Add(commandElement);
         }
