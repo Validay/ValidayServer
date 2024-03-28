@@ -48,19 +48,22 @@ namespace ValidayServer.Network.Commands
             if (!commandsMap.ContainsKey(id))
                 throw new KeyNotFoundException($"Command with ID {id} not founded in server commands map.");
 
-            if (_commandPool.ContainsKey(commandsMap[id])
-                && _commandPool.TryGetValue(commandsMap[id], out ConcurrentBag<CommandElement> commandElements))
+            lock (_commandPool)
             {
-                commandElements.TryTake(out CommandElement commandElement);
+                if (_commandPool.ContainsKey(commandsMap[id])
+                    && _commandPool.TryGetValue(commandsMap[id], out ConcurrentBag<CommandElement> commandElements))
+                {
+                    commandElements.TryTake(out CommandElement commandElement);
 
-                return commandElement?.Command
-                    ?? (TCommand)Activator.CreateInstance(commandsMap[id]);
-            }
-            else
-            {
-                _commandPool.TryAdd(commandsMap[id], new ConcurrentBag<CommandElement>());
+                    return commandElement?.Command
+                        ?? (TCommand)Activator.CreateInstance(commandsMap[id]);
+                }
+                else
+                {
+                    _commandPool.TryAdd(commandsMap[id], new ConcurrentBag<CommandElement>());
 
-                return (TCommand)Activator.CreateInstance(commandsMap[id]);
+                    return (TCommand)Activator.CreateInstance(commandsMap[id]);
+                }
             }
         }
 
