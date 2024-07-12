@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using ValidayServer.Network.Commands.Interfaces;
 
 namespace ValidayServer.Network.Interfaces
 {
@@ -60,10 +61,10 @@ namespace ValidayServer.Network.Interfaces
         /// Send data to client
         /// </summary>
         /// <param name="client">Client target</param>
-        /// <param name="rawData">Raw data</param>
+        /// <param name="clientCommand">Command for send to client</param>
         void SendToClient(
             IClient client,
-            byte[] rawData);
+            IClientCommand clientCommand);
 
         /// <summary>
         /// Disconnect client
