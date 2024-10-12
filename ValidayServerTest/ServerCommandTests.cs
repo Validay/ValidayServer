@@ -17,7 +17,6 @@ namespace ValidayServerTest
         {
             public void Execute(
                 IClient sender,
-                IReadOnlyCollection<IManager> managers,
                 byte[] rawData)
             {
             }
@@ -27,7 +26,6 @@ namespace ValidayServerTest
         {
             public void Execute(
                 IClient sender,
-                IReadOnlyCollection<IManager> managers,
                 byte[] rawData)
             {
             }
@@ -106,8 +104,7 @@ namespace ValidayServerTest
                 commandMap);
 
             commandFirst.Execute(
-                client, 
-                managers, 
+                client,
                 new byte[1]);
 
             commandServerPool.ReturnCommandToPool(

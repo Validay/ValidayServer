@@ -1,5 +1,4 @@
 ﻿using System.Text;
-using ValidayServer.Managers.Interfaces;
 using ValidayServer.Network.Commands.Interfaces;
 using ValidayServer.Network.Interfaces;
 
@@ -12,7 +11,6 @@ namespace ValidayServerSample.Network.Commands.ServerCommands
         /// </summary>
         public void Execute(
             IClient sender, 
-            IReadOnlyCollection<IManager> managers, 
             byte[] rawData)
         {
             string stringData = Encoding.UTF8.GetString(
