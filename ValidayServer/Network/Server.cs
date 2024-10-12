@@ -26,7 +26,12 @@ namespace ValidayServer.Network
         /// <summary>
         /// <inheritdoc/>
         /// </summary>
-        public IReadOnlyCollection<IManager> Managers => (_managers as IReadOnlyCollection<IManager>)!;
+        public IReadOnlyCollection<IManager> Managers { get; private set; }
+
+        /// <summary>
+        /// <inheritdoc/>
+        /// </summary>
+        public IReadOnlyCollection<IClient> ClientConnections { get; private set; }
 
         /// <summary>
         /// <inheritdoc/>
@@ -76,7 +81,7 @@ namespace ValidayServer.Network
         public Server(
             ServerSettings serverSettings,
             bool hideSocketError)
-        {           
+        {          
             _hideSocketError = hideSocketError;
             _ip = serverSettings.Ip;
             _port = serverSettings.Port;
@@ -90,10 +95,12 @@ namespace ValidayServer.Network
                 AddressFamily.InterNetwork,
                 SocketType.Stream,
                 ProtocolType.Tcp);
+            Managers = new ReadOnlyCollection<IManager>(_managers);
+            ClientConnections = new ReadOnlyCollection<IClient>(_clients);
             OnRecivedData = delegate {};
             OnSendedData = delegate {};
             OnClientConnected = delegate {};
-            OnClientDisconnected = delegate {};
+            OnClientDisconnected = delegate {};           
         }
 
         /// <summary>
@@ -115,6 +122,8 @@ namespace ValidayServer.Network
             }
 
             _managers.Add(manager);
+
+            Managers = new ReadOnlyCollection<IManager>(_managers);
         }
 
         /// <summary>
@@ -205,8 +214,8 @@ namespace ValidayServer.Network
         /// <inheritdoc/>
         /// </summary>
         public virtual void SendToClient(
-            [NotNull] IClient client,
-            [NotNull] IClientCommand command)
+            IClient client,
+            IClientCommand command)
         {
             try
             {
@@ -245,18 +254,7 @@ namespace ValidayServer.Network
             OnClientDisconnect(client);
         }
 
-        /// <summary>
-        /// <inheritdoc/>
-        /// </summary>
-        public virtual ReadOnlyCollection<IClient> GetAllConnections()
-        {
-            lock (_clients)
-            {
-                return (_clients as ReadOnlyCollection<IClient>)!;
-            }
-        }
-
-        private void OnClientDisconnect([NotNull] IClient client)
+        private void OnClientDisconnect(IClient client)
         {
             try
             {
@@ -290,6 +288,10 @@ namespace ValidayServer.Network
                     _clients.Remove(client);
                 }
             }
+            finally
+            {
+                ClientConnections = new ReadOnlyCollection<IClient>(_clients);
+            }
         }
 
         private void OnClientConnect(IAsyncResult asyncResult)
@@ -304,6 +306,8 @@ namespace ValidayServer.Network
                 lock (_clients)
                 {
                     _clients.Add(client);
+
+                    ClientConnections = new ReadOnlyCollection<IClient>(_clients);
                 }
 
                 _serverSocket.BeginAccept(

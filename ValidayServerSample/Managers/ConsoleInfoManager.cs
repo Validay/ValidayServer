@@ -101,7 +101,7 @@ namespace ValidayServerSample.Managers
             Console.Title = $"Validay Server Sample" +
                 $" | Memory: {GetMemoryUsage()  / (1024 * 1024)} MB" +
                 $" | CPU: {GetCPUUsage() / 100:0.0}%" +
-                $" | Active connections: {_server?.GetAllConnections().Count}";
+                $" | Active connections: {_server?.ClientConnections.Count}";
         }
 
         private long GetMemoryUsage()
