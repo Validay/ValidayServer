@@ -22,6 +22,11 @@ namespace ValidayServer.Network.Interfaces
         IReadOnlyCollection<IManager> Managers { get; }
 
         /// <summary>
+        /// Client connections colection 
+        /// </summary>
+        IReadOnlyCollection<IClient> ClientConnections { get; }
+
+        /// <summary>
         /// Event for recived data from client
         /// </summary>
         event Action<IClient, byte[]> OnRecivedData;
@@ -71,11 +76,5 @@ namespace ValidayServer.Network.Interfaces
         /// </summary>
         /// <param name="client">Client target</param>
         void DisconnectClient(IClient client);
-
-        /// <summary>
-        /// Get all active clients
-        /// </summary>
-        /// <returns>Active clients</returns>
-        ReadOnlyCollection<IClient> GetAllConnections();
     }
 }
