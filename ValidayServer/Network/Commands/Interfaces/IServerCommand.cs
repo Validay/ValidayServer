@@ -1,6 +1,4 @@
-﻿using ValidayServer.Managers.Interfaces;
-using ValidayServer.Network.Interfaces;
-using System.Collections.Generic;
+﻿using ValidayServer.Network.Interfaces;
 
 namespace ValidayServer.Network.Commands.Interfaces
 {
@@ -13,11 +11,9 @@ namespace ValidayServer.Network.Commands.Interfaces
         /// Executed this server command
         /// </summary>
         /// <param name="sender">Sender client executing server command</param>
-        /// <param name="managers">Collection manager</param>
         /// <param name="rawData">Raw data bytes</param>
         void Execute(
-            IClient sender, 
-            IReadOnlyCollection<IManager> managers,
+            IClient sender,
             byte[] rawData);
     }
 }

@@ -161,7 +161,6 @@ namespace ValidayServer.Managers
 
             command.Execute(
                 sender,
-                _server.Managers,
                 data);
 
             _commandServerPool.ReturnCommandToPool(

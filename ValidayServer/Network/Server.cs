@@ -9,6 +9,7 @@ using ValidayServer.Logging.Interfaces;
 using ValidayServer.Logging;
 using ValidayServer.Managers.Interfaces;
 using ValidayServer.Network.Commands.Interfaces;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ValidayServer.Network
 {
@@ -25,32 +26,27 @@ namespace ValidayServer.Network
         /// <summary>
         /// <inheritdoc/>
         /// </summary>
-        public IReadOnlyCollection<IManager> Managers 
-        { 
-            get => _managers
-                .ToList()
-                .AsReadOnly(); 
-        }
+        public IReadOnlyCollection<IManager> Managers => (_managers as IReadOnlyCollection<IManager>)!;
 
         /// <summary>
         /// <inheritdoc/>
         /// </summary>
-        public event Action<IClient, byte[]>? OnRecivedData;
+        public event Action<IClient, byte[]> OnRecivedData;
 
         /// <summary>
         /// <inheritdoc/>
         /// </summary>
-        public event Action<IClient, byte[]>? OnSendedData;
+        public event Action<IClient, byte[]> OnSendedData;
 
         /// <summary>
         /// <inheritdoc/>
         /// </summary>
-        public event Action<IClient>? OnClientConnected;
+        public event Action<IClient> OnClientConnected;
 
         /// <summary>
         /// <inheritdoc/>
         /// </summary>
-        public event Action<IClient>? OnClientDisconnected;
+        public event Action<IClient> OnClientDisconnected;
 
         private bool _isRunning;
         private bool _hideSocketError;
@@ -94,13 +90,18 @@ namespace ValidayServer.Network
                 AddressFamily.InterNetwork,
                 SocketType.Stream,
                 ProtocolType.Tcp);
+            OnRecivedData = delegate {};
+            OnSendedData = delegate {};
+            OnClientConnected = delegate {};
+            OnClientDisconnected = delegate {};
         }
 
         /// <summary>
         /// <inheritdoc/>
         /// </summary>
+        /// <param name="manager">New manager for registration</param>
         /// <exception cref="InvalidOperationException">Already exist manager exception</exception>
-        public virtual void RegistrationManager(IManager manager)
+        public virtual void RegistrationManager([NotNull] IManager manager)
         {
             bool hasExisting = _managers.FirstOrDefault(existManager => existManager.Name == manager.Name) != null;
 
@@ -140,7 +141,6 @@ namespace ValidayServer.Network
 
                 _serverSocket.Bind(ipEndPoint);
                 _serverSocket.Listen(_connectingClientQueue);
-
                 _serverSocket.BeginAccept(
                     new AsyncCallback(OnClientConnect), 
                     null);
@@ -205,12 +205,9 @@ namespace ValidayServer.Network
         /// <inheritdoc/>
         /// </summary>
         public virtual void SendToClient(
-            IClient client, 
-            IClientCommand command)
+            [NotNull] IClient client,
+            [NotNull] IClientCommand command)
         {
-            if (client == null)
-                return;
-
             try
             {
                 byte[] rawData = command.GetRawData();
@@ -243,7 +240,7 @@ namespace ValidayServer.Network
         /// <summary>
         /// <inheritdoc/>
         /// </summary>
-        public virtual void DisconnectClient(IClient? client)
+        public virtual void DisconnectClient([NotNull] IClient client)
         {
             OnClientDisconnect(client);
         }
@@ -255,15 +252,12 @@ namespace ValidayServer.Network
         {
             lock (_clients)
             {
-                return new ReadOnlyCollection<IClient>(_clients);
+                return (_clients as ReadOnlyCollection<IClient>)!;
             }
         }
 
-        private void OnClientDisconnect(IClient? client)
+        private void OnClientDisconnect([NotNull] IClient client)
         {
-            if (client == null)
-                return;
-
             try
             {
                 client.Socket.Close();
@@ -300,7 +294,7 @@ namespace ValidayServer.Network
 
         private void OnClientConnect(IAsyncResult asyncResult)
         {
-            IClient? client = null;
+            IClient client;
 
             try
             {
@@ -324,17 +318,17 @@ namespace ValidayServer.Network
                     new AsyncCallback(OnDataReceived), 
                     clientSocket);
 
-                OnClientConnected?.Invoke(client);
+                OnClientConnected.Invoke(client);
 
                 _logger?.Log(
-                    $"Client [{client?.Ip}:{client?.Port}] connected!", 
+                    $"Client [{client.Ip}:{client.Port}] connected!", 
                     LogType.Info);
             }
             catch (Exception exception)
             {
                 if (!_hideSocketError)
                     _logger?.Log(
-                        $"Client [{client?.Ip}:{client?.Port}] connect failed! {exception.Message}",
+                        $"OnClientConnect: {exception.Message}\n{exception.StackTrace}",
                         LogType.Error);
             }
         }
@@ -342,7 +336,7 @@ namespace ValidayServer.Network
         private void OnDataReceived(IAsyncResult asyncResult)
         {
             Socket clientSocket = (Socket)asyncResult.AsyncState;
-            IClient? client = null;
+            IClient client;
 
             lock (_clients)
             {
@@ -364,7 +358,7 @@ namespace ValidayServer.Network
                         ref buffer,
                         receive);
 
-                OnRecivedData?.Invoke(
+                OnRecivedData.Invoke(
                     client,
                     buffer);
                 clientSocket.BeginReceive(
@@ -381,15 +375,13 @@ namespace ValidayServer.Network
                     _logger?.Log(
                         $"Data receive from [{client?.Ip}:{client?.Port}] failed! {exception.Message}",
                         LogType.Error);
-
-                DisconnectClient(client);
             }
         }
 
         private void OnDataSent(IAsyncResult asyncResult)
         {
             Socket clientSocket = (Socket)asyncResult.AsyncState;
-            IClient? client = null;
+            IClient client;
 
             lock (_clients)
             {
@@ -413,8 +405,6 @@ namespace ValidayServer.Network
                     _logger?.Log(
                         $"Data sent to [{client?.Ip}:{client?.Port}] failed! {exception.Message}", 
                         LogType.Error);
-
-                OnClientDisconnect(client);
             }
         }
     }
