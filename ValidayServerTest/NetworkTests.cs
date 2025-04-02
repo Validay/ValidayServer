@@ -14,8 +14,7 @@ namespace ValidayServerTest
         {
             IServer server = new Server();
             ILogger logger = new ConsoleLogger(LogType.Info);
-
-            CommandHandlerManager commandHandler = new CommandHandlerManager(
+            CommandHandlerManager _ = new CommandHandlerManager(
                 server,
                 logger);
 
@@ -36,7 +35,6 @@ namespace ValidayServerTest
                 new byte[1],
                 new ClientFactory(),
                 new ConsoleLogger(LogType.Info));
-
             ILogger logger = new ConsoleLogger(LogType.Info);
             IServer server = new Server(
                 serverSettings, 
@@ -44,7 +42,7 @@ namespace ValidayServerTest
 
             Assert.Empty(server.Managers);
 
-            CommandHandlerManager commandHandler = new CommandHandlerManager(
+            CommandHandlerManager _ = new CommandHandlerManager(
                 server,
                 logger);
 
@@ -70,119 +68,128 @@ namespace ValidayServerTest
             });
         }
 
-        [Fact]
-        public void CreateServerSettingsInvalidParameters()
+        [Theory]
+        [MemberData(nameof(InvalidParametersData))]
+        public void CreateServerSettingsInvalidParameters(
+            string ip,
+            int port,
+            int connectingClientQueue,
+            int bufferSize,
+            int maxConnections,
+            int maxDepthReadPackage,
+            byte[] markerStartPackage)
         {
             Assert.Throws<FormatException>(() =>
             {
-                ServerSettings serverSettings = new ServerSettings(
-                    "invalid ip",
-                    8888,
-                    10,
-                    1024,
-                    100,
-                    64,
-                    new byte[1],
+                var serverSettings = new ServerSettings(
+                    ip,
+                    port,
+                    connectingClientQueue,
+                    bufferSize,
+                    maxConnections,
+                    maxDepthReadPackage,
+                    markerStartPackage,
                     new ClientFactory(),
                     new ConsoleLogger(LogType.Info));
             });
+        }
 
-            Assert.Throws<FormatException>(() =>
-            {
-                ServerSettings serverSettings = new ServerSettings(
-                    "127.0.0.1",
-                    100000,
-                    10,
-                    1024,
-                    100,
-                    64,
-                    new byte[1],
-                    new ClientFactory(),
-                    new ConsoleLogger(LogType.Info));
-            });
+        public static IEnumerable<object[]> InvalidParametersData()
+        {
+            var validIp = "127.0.0.1";
+            var validPort = 8888;
+            var validConnectingClientQueue = 10;
+            var validBufferSize = 1024;
+            var validMaxConnections = 100;
+            var validMaxDepthReadPackage = 64;
+            var validMarkerStartPackage = new byte[1];
 
-            Assert.Throws<FormatException>(() =>
-            {
-                ServerSettings serverSettings = new ServerSettings(
-                    "127.0.0.1",
-                    -1,
-                    10,
-                    1024,
-                    100,
-                    64,
-                    new byte[1],
-                    new ClientFactory(),
-                    new ConsoleLogger(LogType.Info));
-            });
+            yield return new object[] 
+            { 
+                "invalid ip",
+                validPort, 
+                validConnectingClientQueue,
+                validBufferSize, 
+                validMaxConnections, 
+                validMaxDepthReadPackage,
+                validMarkerStartPackage 
+            };
 
-            Assert.Throws<FormatException>(() =>
+            yield return new object[] 
             {
-                ServerSettings serverSettings = new ServerSettings(
-                    "127.0.0.1",
-                    8888,
-                    -1,
-                    1024,
-                    100,
-                    64,
-                    new byte[1],
-                    new ClientFactory(),
-                    new ConsoleLogger(LogType.Info));
-            });
+                validIp,
+                100000,
+                validConnectingClientQueue,
+                validBufferSize,
+                validMaxConnections,
+                validMaxDepthReadPackage,
+                validMarkerStartPackage
+            };
 
-            Assert.Throws<FormatException>(() =>
-            {
-                ServerSettings serverSettings = new ServerSettings(
-                    "127.0.0.1",
-                    8888,
-                    10,
-                    -1,
-                    100,
-                    64,
-                    new byte[1],
-                    new ClientFactory(),
-                    new ConsoleLogger(LogType.Info));
-            });
+            yield return new object[] 
+            { 
+                validIp,
+                -1,
+                validConnectingClientQueue,
+                validBufferSize, 
+                validMaxConnections,
+                validMaxDepthReadPackage,
+                validMarkerStartPackage 
+            };
 
-            Assert.Throws<FormatException>(() =>
-            {
-                ServerSettings serverSettings = new ServerSettings(
-                    "127.0.0.1",
-                    8888,
-                    10,
-                    1024,
-                    -1,
-                    64,
-                    new byte[1],
-                    new ClientFactory(),
-                    new ConsoleLogger(LogType.Info));
-            });
+            yield return new object[] 
+            { 
+                validIp, 
+                validPort, 
+                -1,
+                validBufferSize, 
+                validMaxConnections,
+                validMaxDepthReadPackage, 
+                validMarkerStartPackage 
+            };
 
-            Assert.Throws<FormatException>(() =>
-            {
-                ServerSettings serverSettings = new ServerSettings(
-                    "127.0.0.1",
-                    8888,
-                    10,
-                    1024,
-                    100,
-                    -1,
-                    new byte[1],
-                    new ClientFactory(),
-                    new ConsoleLogger(LogType.Info));
-            });
-            Assert.Throws<FormatException>(() =>
-            {
-                ServerSettings serverSettings = new ServerSettings(
-                    "127.0.0.1",
-                    8888,
-                    10,
-                    1024,
-                    100,
-                    64,
-                    new byte[0],
-                    new ClientFactory(),
-                    new ConsoleLogger(LogType.Info));
-            });
+            yield return new object[] 
+            { 
+                validIp,
+                validPort,
+                validConnectingClientQueue,
+                -1,
+                validMaxConnections, 
+                validMaxDepthReadPackage, 
+                validMarkerStartPackage };
+
+            yield return new object[]
+            { 
+                validIp, 
+                validPort,
+                validConnectingClientQueue, 
+                validBufferSize,             
+                -1,
+                validMaxDepthReadPackage,
+                validMarkerStartPackage
+            };
+
+            yield return new object[] 
+            { 
+                validIp,
+                validPort,
+                validConnectingClientQueue,
+                validBufferSize, 
+                validMaxConnections, 
+                -1,
+                validMarkerStartPackage 
+            };
+
+            yield return new object[] 
+            { 
+                validIp,
+                validPort,
+                validConnectingClientQueue,
+                validBufferSize, 
+                validMaxConnections,
+                validMaxDepthReadPackage,
+                new byte[0] 
+            };
         }
     }
 }
