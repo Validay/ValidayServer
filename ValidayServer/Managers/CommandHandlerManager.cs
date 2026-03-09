@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using ValidayServer.Logging;
@@ -22,38 +22,38 @@ namespace ValidayServer.Managers
         public string Name => nameof(CommandHandlerManager);
 
         /// <inheritdoc/>
-        /// <remarks>Set only by Start() and Stop() — private to prevent external bypass of those methods.</remarks>
+        /// <remarks>Set only by Start() and Stop().</remarks>
         public bool IsActive { get; private set; }
 
         /// <summary>
         /// Registered command map exposed via ICommandRegistry.
-        /// Returns a true ReadOnlyDictionary — modification attempts throw NotSupportedException.
+        /// The returned wrapper is created once and reflects registrations made after construction
+        /// because ReadOnlyDictionary wraps the underlying dictionary by reference.
         /// </summary>
-        public IReadOnlyDictionary<ushort, Type> CommandsMap
-            => new ReadOnlyDictionary<ushort, Type>(_serverCommandsMap);
+        public IReadOnlyDictionary<ushort, Type> CommandsMap => _commandsMapReadOnly;
 
         /// <summary>
-        /// Backwards-compatible alias so existing call sites keep working.
+        /// Backwards-compatible alias.
         /// </summary>
-        public IReadOnlyDictionary<ushort, Type> ServerCommandsMap => CommandsMap;
+        public IReadOnlyDictionary<ushort, Type> ServerCommandsMap => _commandsMapReadOnly;
 
-        private Dictionary<ushort, Type> _serverCommandsMap;
-        private ICommandPool<ushort, IServerCommand> _commandServerPool;
-        private IConverterId<ushort> _converterId;
-        private IServer? _server;
-        private ILogger? _logger;
+        private readonly Dictionary<ushort, Type> _serverCommandsMap;
+        private readonly IReadOnlyDictionary<ushort, Type> _commandsMapReadOnly;
+        private readonly ICommandPool<ushort, IServerCommand> _commandServerPool;
+        private readonly IConverterId<ushort> _converterId;
+        private readonly IServer? _server;
+        private readonly ILogger? _logger;
 
         /// <summary>
-        /// Creates the manager.
-        /// NOTE: the manager does NOT register itself into the server here.
-        /// Call server.RegistrationManager(handler) explicitly after construction.
+        /// Creates the manager with default dependencies.
+        /// Self-registers into the server so callers only need one line.
         /// </summary>
         public CommandHandlerManager(
             IServer server,
             ILogger logger)
                 : this(
-                      server, 
-                      logger, 
+                      server,
+                      logger,
                       new Dictionary<ushort, Type>(),
                       new UshortConverterId())
         { }
@@ -76,13 +76,12 @@ namespace ValidayServer.Managers
                     $"{nameof(CommandHandlerManager)}: logger is null!");
 
             _serverCommandsMap = serverCommandsMap;
+            _commandsMapReadOnly = new ReadOnlyDictionary<ushort, Type>(_serverCommandsMap);
             _converterId = converterId;
             _commandServerPool = new CommandPool<ushort, IServerCommand>();
             _server = server;
             _logger = logger;
 
-            //TODO: Self-registration so the old one-liner API still works:
-            //   new CommandHandlerManager(server, logger);
             _server.RegistrationManager(this);
         }
 
@@ -98,7 +97,7 @@ namespace ValidayServer.Managers
             }
 
             IsActive = true;
-            _server.OnRecivedData += OnDataReceived;
+            _server.OnReceivedData += OnDataReceived;
 
             _logger?.Log($"{nameof(CommandHandlerManager)} started!", LogType.Info);
         }
@@ -110,7 +109,7 @@ namespace ValidayServer.Managers
                 return;
 
             IsActive = false;
-            _server.OnRecivedData -= OnDataReceived;
+            _server.OnReceivedData -= OnDataReceived;
 
             _logger?.Log($"{nameof(CommandHandlerManager)} stopped!", LogType.Info);
         }
@@ -141,6 +140,14 @@ namespace ValidayServer.Managers
         {
             if (_server == null)
                 return;
+
+            if (data == null || data.Length < sizeof(ushort))
+            {
+                _logger?.Log(
+                    $"Received too-short packet ({data?.Length ?? 0} bytes) from [{sender?.Ip}:{sender?.Port}] — ignored.",
+                    LogType.Warning);
+                return;
+            }
 
             try
             {

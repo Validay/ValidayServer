@@ -62,3 +62,5 @@ docfx_project/
 *.DS_Store
 *.bak
 *~
+/.claude/settings.local.json
+/CLAUDE.md

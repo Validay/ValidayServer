@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using ValidayServer.Logging;
@@ -11,6 +11,8 @@ namespace ValidayServer.Managers
 {
     /// <summary>
     /// Manager that tracks bad packets per client and disconnects clients that exceed the threshold.
+    /// A "bad packet" is any packet whose command ID is not registered, or whose data is too short
+    /// to even contain a command ID.
     /// Depends on ICommandRegistry (not on CommandHandlerManager directly) to check known command IDs.
     /// </summary>
     public class BadPacketDefenderManager : IManager
@@ -80,7 +82,7 @@ namespace ValidayServer.Managers
 
             _server.OnClientConnected += OnClientConnected;
             _server.OnClientDisconnected += OnClientDisconnected;
-            _server.OnRecivedData += OnDataReceived;
+            _server.OnReceivedData += OnDataReceived;
 
             _logger?.Log($"{nameof(BadPacketDefenderManager)} started!", LogType.Info);
         }
@@ -95,7 +97,7 @@ namespace ValidayServer.Managers
 
             _server.OnClientConnected -= OnClientConnected;
             _server.OnClientDisconnected -= OnClientDisconnected;
-            _server.OnRecivedData -= OnDataReceived;
+            _server.OnReceivedData -= OnDataReceived;
 
             _logger?.Log($"{nameof(BadPacketDefenderManager)} stopped!", LogType.Info);
         }
@@ -116,7 +118,7 @@ namespace ValidayServer.Managers
 
         private void OnDataReceived(IClient client, byte[] rawData)
         {
-            // Resolve the command registry via ICommandRegistry — no hard dependency on CommandHandlerManager
+            // Resolve the command registry via ICommandRegistry — no hard dependency on CommandHandlerManager.
             ICommandRegistry? registry = _server?.Managers
                 .OfType<ICommandRegistry>()
                 .FirstOrDefault();
@@ -124,20 +126,30 @@ namespace ValidayServer.Managers
             if (registry == null)
                 return;
 
-            ushort commandId = _converterId.Convert(rawData);
-
             lock (_badPacketCounts)
             {
                 if (!_badPacketCounts.ContainsKey(client))
-                    return; // client already disconnected
+                    return; // Client already disconnected.
 
-                if (!registry.CommandsMap.ContainsKey(commandId))
+                bool isBad;
+
+                if (rawData == null || rawData.Length < sizeof(ushort))
+                {
+                    // Too short to contain a command ID — inherently bad.
+                    isBad = true;
+                }
+                else
+                {
+                    ushort commandId = _converterId.Convert(rawData);
+                    isBad = !registry.CommandsMap.ContainsKey(commandId);
+                }
+
+                if (isBad)
                 {
                     _badPacketCounts[client]++;
 
                     _logger?.Log(
                         $"Client [{client.Ip}:{client.Port}] sent bad packet. " +
-                        $"Command id={commandId} not found. " +
                         $"Count: {_badPacketCounts[client]}/{_threshold}",
                         LogType.Low);
                 }

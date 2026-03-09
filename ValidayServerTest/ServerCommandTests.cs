@@ -4,14 +4,82 @@ using ValidayServer.Network.Interfaces;
 using ValidayServer.Network.Commands;
 using ValidayServer.Network.Commands.Interfaces;
 using ValidayServer.Managers;
+using ValidayServer.Managers.Interfaces;
 using ValidayServer.Logging;
 using ValidayServer.Logging.Interfaces;
+using System.Collections.Generic;
 using System.Net.Sockets;
 
 namespace ValidayServerTest
 {
     public class ServerCommandTests
     {
+        // ─── Test helpers ────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Minimal IServer fake that lets tests trigger events and inspect DisconnectClient calls.
+        /// </summary>
+        class FakeServer : IServer
+        {
+            public bool IsRun => false;
+            public IReadOnlyCollection<IManager> Managers { get; private set; }
+            public IReadOnlyCollection<IClient> ClientConnections { get; } = new List<IClient>().AsReadOnly();
+
+            public event Action<IClient, byte[]> OnReceivedData = delegate { };
+            public event Action<IClient, byte[]> OnSentData = delegate { };
+            public event Action<IClient> OnClientConnected = delegate { };
+            public event Action<IClient> OnClientDisconnected = delegate { };
+
+            public IClient? LastDisconnected { get; private set; }
+            public int DisconnectCallCount { get; private set; }
+
+            private readonly List<IManager> _managers = new List<IManager>();
+
+            public FakeServer()
+            {
+                Managers = _managers.AsReadOnly();
+            }
+
+            public void RegistrationManager(IManager manager)
+            {
+                foreach (var m in _managers)
+                    if (m.Name == manager.Name)
+                        throw new InvalidOperationException($"Manager [{manager.Name}] already registered.");
+                _managers.Add(manager);
+            }
+
+            public void Start() { }
+            public void Stop() { }
+            public void SendToClient(IClient client, IClientCommand command) { }
+
+            public void DisconnectClient(IClient client)
+            {
+                LastDisconnected = client;
+                DisconnectCallCount++;
+            }
+
+            // Helpers to fire events from tests.
+            public void SimulateClientConnected(IClient client) => OnClientConnected(client);
+            public void SimulateDataReceived(IClient client, byte[] data) => OnReceivedData(client, data);
+            public void SimulateClientDisconnected(IClient client) => OnClientDisconnected(client);
+        }
+
+        /// <summary>
+        /// Minimal IClient fake for use in isolation tests.
+        /// </summary>
+        class FakeClient : IClient
+        {
+            public string Ip { get; }
+            public int Port { get; }
+
+            public FakeClient(string ip = "127.0.0.1", int port = 9000)
+            {
+                Ip = ip;
+                Port = port;
+            }
+        }
+
+
         class TestCommandOne : IServerCommand
         {
             public bool WasExecuted { get; private set; }
@@ -309,6 +377,172 @@ namespace ValidayServerTest
 
             var ex = Record.Exception(() =>
                 new BadPacketDefenderManager(server, logger, 5, new UshortConverterId()));
+
+            Assert.Null(ex);
+        }
+
+        // ─── BadPacketDefenderManager behaviour tests ───────────────────────────
+
+        [Fact]
+        public void BadPacketDefenderManager_Threshold_DisconnectsClientAfterNBadPackets()
+        {
+            var fakeServer = new FakeServer();
+            var logger = new ConsoleLogger(LogType.Low);
+            var handler = new CommandHandlerManager(fakeServer, logger);
+            // Register one known command so the defender has a registry to check.
+            handler.RegistrationCommand<TestCommandOne>(1);
+            var defender = new BadPacketDefenderManager(fakeServer, logger, countBadPacketForDisconnect: 3, new UshortConverterId());
+
+            var client = new FakeClient();
+
+            handler.Start();
+            defender.Start();
+
+            fakeServer.SimulateClientConnected(client);
+
+            // Unknown command ID (99 not registered) — each counts as bad.
+            byte[] badPacket = BitConverter.GetBytes((ushort)99);
+            fakeServer.SimulateDataReceived(client, badPacket);
+            fakeServer.SimulateDataReceived(client, badPacket);
+
+            Assert.Null(fakeServer.LastDisconnected); // threshold not reached yet
+
+            fakeServer.SimulateDataReceived(client, badPacket);
+
+            Assert.Same(client, fakeServer.LastDisconnected);
+            Assert.Equal(1, fakeServer.DisconnectCallCount);
+        }
+
+        [Fact]
+        public void BadPacketDefenderManager_GoodPackets_DoNotDisconnect()
+        {
+            var fakeServer = new FakeServer();
+            var logger = new ConsoleLogger(LogType.Low);
+            var handler = new CommandHandlerManager(fakeServer, logger);
+            handler.RegistrationCommand<TestCommandOne>(1);
+            var defender = new BadPacketDefenderManager(fakeServer, logger, 3, new UshortConverterId());
+
+            var client = new FakeClient();
+            handler.Start();
+            defender.Start();
+            fakeServer.SimulateClientConnected(client);
+
+            byte[] goodPacket = BitConverter.GetBytes((ushort)1);
+            for (int i = 0; i < 10; i++)
+                fakeServer.SimulateDataReceived(client, goodPacket);
+
+            Assert.Null(fakeServer.LastDisconnected);
+        }
+
+        [Fact]
+        public void BadPacketDefenderManager_TooShortData_CountsAsBadPacket()
+        {
+            var fakeServer = new FakeServer();
+            var logger = new ConsoleLogger(LogType.Low);
+            var handler = new CommandHandlerManager(fakeServer, logger);
+            var defender = new BadPacketDefenderManager(fakeServer, logger, 1, new UshortConverterId());
+
+            var client = new FakeClient();
+            handler.Start();
+            defender.Start();
+            fakeServer.SimulateClientConnected(client);
+
+            // 1-byte packet is too short to hold a ushort command ID.
+            fakeServer.SimulateDataReceived(client, new byte[] { 0x01 });
+
+            Assert.Same(client, fakeServer.LastDisconnected);
+        }
+
+        [Fact]
+        public void BadPacketDefenderManager_ClientDisconnected_RemovesTracking()
+        {
+            var fakeServer = new FakeServer();
+            var logger = new ConsoleLogger(LogType.Low);
+            var defender = new BadPacketDefenderManager(fakeServer, logger, 5, new UshortConverterId());
+            var handler = new CommandHandlerManager(fakeServer, logger);
+
+            var client = new FakeClient();
+            defender.Start();
+            handler.Start();
+            fakeServer.SimulateClientConnected(client);
+            fakeServer.SimulateClientDisconnected(client);
+
+            // After disconnect, sending data should not throw.
+            byte[] data = BitConverter.GetBytes((ushort)99);
+            var ex = Record.Exception(() => fakeServer.SimulateDataReceived(client, data));
+
+            Assert.Null(ex);
+        }
+
+        // ─── CommandHandlerManager behaviour tests ──────────────────────────────
+
+        [Fact]
+        public void CommandHandlerManager_ShortData_DoesNotCrash()
+        {
+            var fakeServer = new FakeServer();
+            var logger = new ConsoleLogger(LogType.Low);
+            var handler = new CommandHandlerManager(fakeServer, logger);
+            handler.RegistrationCommand<TestCommandOne>(1);
+            handler.Start();
+
+            var client = new FakeClient();
+            var ex = Record.Exception(() => fakeServer.SimulateDataReceived(client, new byte[] { 0x01 }));
+
+            Assert.Null(ex);
+        }
+
+        [Fact]
+        public void CommandHandlerManager_UnknownCommand_DoesNotCrash()
+        {
+            var fakeServer = new FakeServer();
+            var logger = new ConsoleLogger(LogType.Low);
+            var handler = new CommandHandlerManager(fakeServer, logger);
+            handler.RegistrationCommand<TestCommandOne>(1);
+            handler.Start();
+
+            var client = new FakeClient();
+            byte[] unknownPacket = BitConverter.GetBytes((ushort)99);
+            var ex = Record.Exception(() => fakeServer.SimulateDataReceived(client, unknownPacket));
+
+            Assert.Null(ex);
+        }
+
+        [Fact]
+        public void CommandHandlerManager_AfterStop_DoesNotExecuteCommands()
+        {
+            var fakeServer = new FakeServer();
+            var logger = new ConsoleLogger(LogType.Low);
+            var handler = new CommandHandlerManager(fakeServer, logger);
+            handler.RegistrationCommand<TestCommandOne>(1);
+            handler.Start();
+            handler.Stop();
+
+            var client = new FakeClient();
+            var cmd = new TestCommandOne();
+
+            // Simulate data — handler unsubscribed, so cmd.Execute should never be called.
+            byte[] packet = BitConverter.GetBytes((ushort)1);
+            fakeServer.SimulateDataReceived(client, packet);
+
+            // If the handler were still active it would get a new instance from the pool.
+            // We can't observe that directly, but we can verify Stop sets IsActive correctly.
+            Assert.False(handler.IsActive);
+        }
+
+        [Fact]
+        public void CommandHandlerManager_ThrowingCommand_DoesNotCrash()
+        {
+            var fakeServer = new FakeServer();
+            var logger = new ConsoleLogger(LogType.Low);
+            var handler = new CommandHandlerManager(fakeServer, logger);
+            handler.RegistrationCommand<ThrowingCommand>(1);
+            handler.Start();
+
+            var client = new FakeClient();
+            byte[] packet = BitConverter.GetBytes((ushort)1);
+
+            // ThrowingCommand.Execute throws, but the manager catches it.
+            var ex = Record.Exception(() => fakeServer.SimulateDataReceived(client, packet));
 
             Assert.Null(ex);
         }

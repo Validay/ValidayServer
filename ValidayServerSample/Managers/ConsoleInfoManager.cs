@@ -19,7 +19,7 @@ namespace ValidayServerSample.Managers
         /// <summary>
         /// <inheritdoc/>
         /// </summary>
-        public bool IsActive { get; set; }
+        public bool IsActive { get; private set; }
 
         private float _intervalUpdateInfoSeconds;
         private Timer? _updateInfoTimer;
@@ -43,10 +43,10 @@ namespace ValidayServerSample.Managers
             _logger = logger;
 
             if (_server == null)
-                throw new NullReferenceException($"{nameof(ConsoleInfoManager)}: Server is null!");
+                throw new ArgumentNullException(nameof(server), $"{nameof(ConsoleInfoManager)}: Server is null!");
 
             if (_logger == null)
-                throw new NullReferenceException($"{nameof(ConsoleInfoManager)}: Logger is null!");
+                throw new ArgumentNullException(nameof(logger), $"{nameof(ConsoleInfoManager)}: Logger is null!");
 
             _server.RegistrationManager(this);
         }
