@@ -5,34 +5,37 @@ using System.Net.Sockets;
 namespace ValidayServer.Network
 {
     /// <summary>
-    /// Base class client
+    /// Represents a client connected to the server.
+    /// Socket is intentionally not part of IClient — it is an implementation detail
+    /// accessed only by Server internals via the concrete type.
     /// </summary>
     public class Client : IClient
     {
         /// <summary>
-        /// <inheritdoc/>
+        /// The underlying socket.
+        /// Public so the class compiles, but intentionally absent from IClient —
+        /// treat it as an implementation detail and avoid using it outside of Server internals.
         /// </summary>
-        public Socket Socket { get; private set; }
+        public Socket Socket { get; }
 
         /// <summary>
         /// <inheritdoc/>
         /// </summary>
-        public string Ip { get; private set; }
+        public string Ip { get; }
 
         /// <summary>
         /// <inheritdoc/>
         /// </summary>
-        public int Port { get; private set; }
+        public int Port { get; }
 
         /// <summary>
-        /// Base constructor for client
+        /// Creates a Client wrapping an accepted socket.
         /// </summary>
-        /// <param name="socket">Socket for this client</param>
         public Client(Socket socket)
         {
-            IPEndPoint endPoint = (IPEndPoint)socket.RemoteEndPoint;
-
             Socket = socket;
+
+            IPEndPoint? endPoint = socket.RemoteEndPoint as IPEndPoint;
 
             if (endPoint != null)
             {

@@ -1,8 +1,7 @@
 ﻿using ValidayServer.Managers.Interfaces;
+using ValidayServer.Network.Commands.Interfaces;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using ValidayServer.Network.Commands.Interfaces;
 
 namespace ValidayServer.Network.Interfaces
 {
@@ -17,64 +16,64 @@ namespace ValidayServer.Network.Interfaces
         bool IsRun { get; }
 
         /// <summary>
-        /// Managers colection 
+        /// Registered managers collection
         /// </summary>
         IReadOnlyCollection<IManager> Managers { get; }
 
         /// <summary>
-        /// Client connections colection 
+        /// Connected clients collection
         /// </summary>
         IReadOnlyCollection<IClient> ClientConnections { get; }
 
         /// <summary>
-        /// Event for recived data from client
+        /// Fires when data is received from a client
         /// </summary>
         event Action<IClient, byte[]> OnRecivedData;
 
         /// <summary>
-        /// Event for sended data to client
+        /// Fires when data is sent to a client
         /// </summary>
         event Action<IClient, byte[]> OnSendedData;
 
         /// <summary>
-        /// Event for connect client
+        /// Fires when a client connects
         /// </summary>
         event Action<IClient> OnClientConnected;
 
         /// <summary>
-        /// Event for disconnect client
+        /// Fires when a client disconnects
         /// </summary>
         event Action<IClient> OnClientDisconnected;
 
         /// <summary>
-        /// Registration new instance manager
+        /// Register a manager. Must be called before Start().
         /// </summary>
-        /// <param name="manager">Instance manager</param>
+        /// <exception cref="InvalidOperationException">
+        /// Thrown if a manager with the same name is already registered,
+        /// or if the server is already running.
+        /// </exception>
         void RegistrationManager(IManager manager);
 
         /// <summary>
-        /// Starting this server
+        /// Start the server and all registered managers
         /// </summary>
         void Start();
 
         /// <summary>
-        /// Stopping this server
+        /// Stop the server and all registered managers
         /// </summary>
         void Stop();
 
         /// <summary>
-        /// Send data to client
+        /// Send a command to a specific client
         /// </summary>
-        /// <param name="client">Client target</param>
-        /// <param name="clientCommand">Command for send to client</param>
         void SendToClient(
             IClient client,
             IClientCommand clientCommand);
 
         /// <summary>
-        /// Disconnect client
+        /// Disconnect a specific client
         /// </summary>
-        /// <param name="client">Client target</param>
         void DisconnectClient(IClient client);
     }
 }

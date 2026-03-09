@@ -8,89 +8,75 @@ using ValidayServer.Network.Interfaces;
 namespace ValidayServer.Network
 {
     /// <summary>
-    /// Server settings
+    /// Server configuration.
+    /// Declared as a class (not struct) because it contains reference-type fields
+    /// (ILogger, IClientFactory, byte[]) — copying a struct would share those references silently.
     /// </summary>
-    public struct ServerSettings
+    public class ServerSettings
     {
         /// <summary>
-        /// Ip address server
+        /// IP address the server will bind to
         /// </summary>
         public string Ip { get; set; }
 
         /// <summary>
-        /// Port server
+        /// Port the server will listen on
         /// </summary>
         public int Port { get; set; }
 
         /// <summary>
-        /// Maximum number of expected connections
+        /// Maximum number of pending connections in the accept queue
         /// </summary>
         public int ConnectingClientQueue { get; set; }
-        
+
         /// <summary>
-        /// Buffer size
+        /// Receive buffer size in bytes
         /// </summary>
         public int BufferSize { get; set; }
 
         /// <summary>
-        /// Maximum client connections
+        /// Maximum number of simultaneous client connections
         /// </summary>
         public int MaxConnection { get; set; }
 
         /// <summary>
-        /// Maximum depth for reading packet in client network stream
+        /// Maximum read depth for a single packet (framing guard)
         /// </summary>
         public int MaxDepthReadPacket { get; set; }
 
         /// <summary>
-        /// Marker for detect start new packet
+        /// Byte sequence that marks the beginning of a new packet
         /// </summary>
         public byte[] MarkerStartPacket { get; set; }
 
         /// <summary>
-        /// Factory for creating clients
+        /// Factory used to wrap accepted sockets into IClient instances
         /// </summary>
         public IClientFactory ClientFactory { get; set; }
 
         /// <summary>
-        /// Logger for server
+        /// Logger used by the server
         /// </summary>
         public ILogger Logger { get; set; }
 
         /// <summary>
-        /// Default server settings
+        /// Ready-to-use default settings (localhost:8888)
         /// </summary>
-        public static ServerSettings Default => new ServerSettings
-        {
-            Ip = "127.0.0.1",
-            BufferSize = 1024,
-            MaxConnection = 100,
-            Port = 8888,
-            ConnectingClientQueue = 10,
-            MaxDepthReadPacket = 64,
-            MarkerStartPacket = new byte[]
-            {
-                1,
-                2,
-                3
-            },
-            ClientFactory = new ClientFactory(),
-            Logger = new ConsoleLogger(LogType.Info),
-        };
+        public static ServerSettings Default => new ServerSettings(
+            ip: "127.0.0.1",
+            port: 8888,
+            connectingClientQueue: 10,
+            bufferSize: 1024,
+            maxConnections: 100,
+            maxDepthReadPacket: 64,
+            markerStartPacket: new byte[] { 1, 2, 3 },
+            clientFactory: new ClientFactory(),
+            logger: new ConsoleLogger(LogType.Info));
 
         /// <summary>
-        /// Default constructor server settings
+        /// Creates and validates server settings.
         /// </summary>
-        /// <param name="ip">Ip address server</param>
-        /// <param name="port">Port server</param>
-        /// <param name="connectingClientQueue">Maximum number of expected connections</param>
-        /// <param name="bufferSize">Buffer size</param>
-        /// <param name="maxConnections">Maximum client connections</param>
-        /// <param name="maxDepthReadPacket">Maximum depth for reading packet in client network stream</param>
-        /// <param name="markerStartPacket">Marker for detect start new packet</param>
-        /// <param name="clientFactory">Factory for creating clients</param>
-        /// <param name="logger">Logger for server</param>
-        /// <exception cref="FormatException">Invalid parameters</exception>
+        /// <exception cref="FormatException">Thrown when any parameter is out of range or invalid.</exception>
         public ServerSettings(
             string ip,
             int port,
@@ -102,39 +88,51 @@ namespace ValidayServer.Network
             IClientFactory clientFactory,
             ILogger logger)
         {
-            if (bufferSize < 0
-                || connectingClientQueue < 0
-                || maxDepthReadPacket < 0
-                || maxConnections < 0
-                || clientFactory == null
-                || logger == null
-                || port < 0
-                || port > 65535
-                || markerStartPacket.Length == 0
-                || !IsValidIpAddress(ip))
-                throw new FormatException($"{nameof(ServerSettings)} create failed! Invalid parameters");
+            if (!IsValidIpAddress(ip))
+                throw new FormatException($"{nameof(ServerSettings)}: invalid IP address '{ip}'.");
+
+            if (port < 0 || port > 65535)
+                throw new FormatException($"{nameof(ServerSettings)}: port must be 0–65535, got {port}.");
+
+            if (connectingClientQueue < 0)
+                throw new FormatException($"{nameof(ServerSettings)}: connectingClientQueue must be >= 0.");
+
+            if (bufferSize < 0)
+                throw new FormatException($"{nameof(ServerSettings)}: bufferSize must be >= 0.");
+
+            if (maxConnections < 0)
+                throw new FormatException($"{nameof(ServerSettings)}: maxConnections must be >= 0.");
+
+            if (maxDepthReadPacket < 0)
+                throw new FormatException($"{nameof(ServerSettings)}: maxDepthReadPacket must be >= 0.");
+
+            if (markerStartPacket == null || markerStartPacket.Length == 0)
+                throw new FormatException($"{nameof(ServerSettings)}: markerStartPacket must not be empty.");
+
+            if (clientFactory == null)
+                throw new ArgumentNullException(nameof(clientFactory));
+
+            if (logger == null)
+                throw new ArgumentNullException(nameof(logger));
 
             Ip = ip;
             Port = port;
             ConnectingClientQueue = connectingClientQueue;
-            MaxDepthReadPacket = maxDepthReadPacket;
             BufferSize = bufferSize;
             MaxConnection = maxConnections;
+            MaxDepthReadPacket = maxDepthReadPacket;
             MarkerStartPacket = markerStartPacket;
             ClientFactory = clientFactory;
-            Logger = logger;              
+            Logger = logger;
         }
 
         private static bool IsValidIpAddress(string ipAddress)
         {
-            if (IPAddress.TryParse(ipAddress, out IPAddress parsedIpAddress))
-            {
-                if (parsedIpAddress.AddressFamily == AddressFamily.InterNetwork 
-                    || parsedIpAddress.AddressFamily == AddressFamily.InterNetworkV6)
-                    return true;
-            }
+            if (!IPAddress.TryParse(ipAddress, out IPAddress parsed))
+                return false;
 
-            return false;
+            return parsed.AddressFamily == AddressFamily.InterNetwork
+                || parsed.AddressFamily == AddressFamily.InterNetworkV6;
         }
     }
 }
