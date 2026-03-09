@@ -97,8 +97,8 @@ namespace ValidayServer.Network
             if (connectingClientQueue < 0)
                 throw new FormatException($"{nameof(ServerSettings)}: connectingClientQueue must be >= 0.");
 
-            if (bufferSize < 0)
-                throw new FormatException($"{nameof(ServerSettings)}: bufferSize must be >= 0.");
+            if (bufferSize <= 0)
+                throw new FormatException($"{nameof(ServerSettings)}: bufferSize must be > 0.");
 
             if (maxConnections < 0)
                 throw new FormatException($"{nameof(ServerSettings)}: maxConnections must be >= 0.");

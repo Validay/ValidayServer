@@ -28,12 +28,12 @@ namespace ValidayServer.Network.Interfaces
         /// <summary>
         /// Fires when data is received from a client
         /// </summary>
-        event Action<IClient, byte[]> OnRecivedData;
+        event Action<IClient, byte[]> OnReceivedData;
 
         /// <summary>
-        /// Fires when data is sent to a client
+        /// Fires when data is successfully sent to a client
         /// </summary>
-        event Action<IClient, byte[]> OnSendedData;
+        event Action<IClient, byte[]> OnSentData;
 
         /// <summary>
         /// Fires when a client connects

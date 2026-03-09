@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Collections.Generic;
@@ -23,16 +23,16 @@ namespace ValidayServer.Network
         public bool IsRun => _isRunning;
 
         /// <inheritdoc/>
-        public IReadOnlyCollection<IManager> Managers { get; private set; }
+        public IReadOnlyCollection<IManager> Managers { get; }
 
         /// <inheritdoc/>
-        public IReadOnlyCollection<IClient> ClientConnections { get; private set; }
+        public IReadOnlyCollection<IClient> ClientConnections { get; }
 
         /// <inheritdoc/>
-        public event Action<IClient, byte[]> OnRecivedData = delegate { };
+        public event Action<IClient, byte[]> OnReceivedData = delegate { };
 
         /// <inheritdoc/>
-        public event Action<IClient, byte[]> OnSendedData = delegate { };
+        public event Action<IClient, byte[]> OnSentData = delegate { };
 
         /// <inheritdoc/>
         public event Action<IClient> OnClientConnected = delegate { };
@@ -42,24 +42,52 @@ namespace ValidayServer.Network
 
         private bool _isRunning;
         private bool _disposed;
-        private bool _hideSocketError;
+        private bool _suppressSocketErrors;
         private string _ip;
         private int _port;
         private int _connectingClientQueue;
         private int _bufferSize;
         private Socket? _serverSocket;
-        private IList<IClient> _clients;
-        private IList<IManager> _managers;
+        private readonly List<IClient> _clients;
+        private readonly List<IManager> _managers;
         private ILogger _logger;
         private IClientFactory _clientFactory;
+
+        // Carries socket + pre-allocated buffer across async receive calls.
+        private sealed class ReceiveState
+        {
+            public Socket Socket { get; }
+            public byte[] Buffer { get; }
+
+            public ReceiveState(Socket socket, byte[] buffer)
+            {
+                Socket = socket;
+                Buffer = buffer;
+            }
+        }
+
+        // Carries socket + client + data across async send calls.
+        private sealed class SendState
+        {
+            public Socket Socket { get; }
+            public IClient Client { get; }
+            public byte[] Data { get; }
+
+            public SendState(Socket socket, IClient client, byte[] data)
+            {
+                Socket = socket;
+                Client = client;
+                Data = data;
+            }
+        }
 
         /// <summary>
         /// Creates a server with default settings.
         /// </summary>
-        public Server() 
+        public Server()
             : this(
                   ServerSettings.Default,
-                  hideSocketError: true) 
+                  suppressSocketErrors: true)
         { }
 
         /// <summary>
@@ -67,9 +95,9 @@ namespace ValidayServer.Network
         /// </summary>
         public Server(
             ServerSettings serverSettings,
-            bool hideSocketError)
+            bool suppressSocketErrors)
         {
-            _hideSocketError = hideSocketError;
+            _suppressSocketErrors = suppressSocketErrors;
             _ip = serverSettings.Ip;
             _port = serverSettings.Port;
             _connectingClientQueue = serverSettings.ConnectingClientQueue;
@@ -78,6 +106,7 @@ namespace ValidayServer.Network
             _clientFactory = serverSettings.ClientFactory;
             _clients = new List<IClient>();
             _managers = new List<IManager>();
+            // ReadOnlyCollection wraps the list by reference — create once and reuse.
             Managers = new ReadOnlyCollection<IManager>(_managers);
             ClientConnections = new ReadOnlyCollection<IClient>(_clients);
         }
@@ -102,7 +131,6 @@ namespace ValidayServer.Network
             }
 
             _managers.Add(manager);
-            Managers = new ReadOnlyCollection<IManager>(_managers);
         }
 
         /// <inheritdoc/>
@@ -112,8 +140,10 @@ namespace ValidayServer.Network
             {
                 _logger?.Log("Server starting...", LogType.Info);
 
+                AddressFamily addressFamily = IPAddress.Parse(_ip).AddressFamily;
+
                 _serverSocket = new Socket(
-                    AddressFamily.InterNetwork,
+                    addressFamily,
                     SocketType.Stream,
                     ProtocolType.Tcp);
 
@@ -173,7 +203,13 @@ namespace ValidayServer.Network
             Socket? socket = GetSocket(client);
 
             if (socket == null)
+            {
+                _logger?.Log(
+                    $"SendToClient: cannot resolve socket for client [{client?.Ip}:{client?.Port}]. " +
+                    "Custom IClient implementations must be of type Client.",
+                    LogType.Warning);
                 return;
+            }
 
             try
             {
@@ -183,17 +219,15 @@ namespace ValidayServer.Network
                     rawData, 0, rawData.Length,
                     SocketFlags.None,
                     OnDataSent,
-                    socket);
-
-                OnSendedData.Invoke(client, rawData);
+                    new SendState(socket, client, rawData));
 
                 _logger?.Log(
-                    $"Send data [{rawData.Length} bytes] to [{client.Ip}:{client.Port}]",
+                    $"Sending [{rawData.Length} bytes] to [{client.Ip}:{client.Port}]",
                     LogType.Low);
             }
             catch (Exception exception)
             {
-                if (!_hideSocketError)
+                if (!_suppressSocketErrors)
                     _logger?.Log(exception.Message, LogType.Warning);
             }
         }
@@ -217,7 +251,7 @@ namespace ValidayServer.Network
                 _serverSocket?.Dispose();
                 _serverSocket = null;
             }
-            catch {}
+            catch { }
         }
 
         /// <summary>
@@ -239,7 +273,6 @@ namespace ValidayServer.Network
                         return;
 
                     _clients.Remove(client);
-                    ClientConnections = new ReadOnlyCollection<IClient>(_clients);
                 }
 
                 Socket? socket = GetSocket(client);
@@ -254,31 +287,36 @@ namespace ValidayServer.Network
             }
             catch (Exception exception)
             {
-                if (!_hideSocketError)
+                if (!_suppressSocketErrors)
                     _logger?.Log(exception.Message, LogType.Error);
             }
         }
 
         private void OnClientConnect(IAsyncResult asyncResult)
         {
+            if (_serverSocket == null)
+                return;
+
             try
             {
-                Socket clientSocket = _serverSocket!.EndAccept(asyncResult);
+                Socket clientSocket = _serverSocket.EndAccept(asyncResult);
                 IClient client = _clientFactory.CreateClient(clientSocket);
 
                 lock (_clients)
                 {
                     _clients.Add(client);
-                    ClientConnections = new ReadOnlyCollection<IClient>(_clients);
                 }
 
+                // Re-arm the accept loop before processing the new client.
                 _serverSocket.BeginAccept(OnClientConnect, null);
 
+                // Start receiving with a dedicated buffer per connection.
+                byte[] buffer = new byte[Math.Max(1, _bufferSize)];
                 clientSocket.BeginReceive(
-                    Array.Empty<byte>(), 0, 0,
+                    buffer, 0, buffer.Length,
                     SocketFlags.None,
                     OnDataReceived,
-                    clientSocket);
+                    new ReceiveState(clientSocket, buffer));
 
                 OnClientConnected.Invoke(client);
 
@@ -288,7 +326,7 @@ namespace ValidayServer.Network
             }
             catch (Exception exception)
             {
-                if (!_hideSocketError)
+                if (!_suppressSocketErrors)
                     _logger?.Log(
                         $"OnClientConnect: {exception.Message}\n{exception.StackTrace}",
                         LogType.Error);
@@ -297,7 +335,8 @@ namespace ValidayServer.Network
 
         private void OnDataReceived(IAsyncResult asyncResult)
         {
-            Socket clientSocket = (Socket)asyncResult.AsyncState!;
+            var state = (ReceiveState)asyncResult.AsyncState!;
+            Socket clientSocket = state.Socket;
             IClient? client;
 
             lock (_clients)
@@ -307,26 +346,32 @@ namespace ValidayServer.Network
 
             try
             {
-                clientSocket.EndReceive(asyncResult);
+                int received = clientSocket.EndReceive(asyncResult);
 
-                byte[] buffer = new byte[_bufferSize];
-                int received = clientSocket.Receive(buffer, buffer.Length, SocketFlags.None);
+                if (received == 0)
+                {
+                    // Zero bytes means the client closed the connection gracefully.
+                    if (client != null)
+                        OnClientDisconnect(client);
+                    return;
+                }
 
-                if (received < buffer.Length)
-                    Array.Resize(ref buffer, received);
+                byte[] data = new byte[received];
+                Array.Copy(state.Buffer, data, received);
 
                 if (client != null)
-                    OnRecivedData.Invoke(client, buffer);
+                    OnReceivedData.Invoke(client, data);
 
+                // Re-arm the receive loop, reusing the same buffer.
                 clientSocket.BeginReceive(
-                    Array.Empty<byte>(), 0, 0,
+                    state.Buffer, 0, state.Buffer.Length,
                     SocketFlags.None,
                     OnDataReceived,
-                    clientSocket);
+                    state);
             }
             catch (Exception exception)
             {
-                if (!_hideSocketError)
+                if (!_suppressSocketErrors)
                     _logger?.Log(
                         $"Data receive from [{client?.Ip}:{client?.Port}] failed! {exception.Message}",
                         LogType.Error);
@@ -338,30 +383,23 @@ namespace ValidayServer.Network
 
         private void OnDataSent(IAsyncResult asyncResult)
         {
-            Socket clientSocket = (Socket)asyncResult.AsyncState!;
-            IClient? client;
-
-            lock (_clients)
-            {
-                client = _clients.FirstOrDefault(c => GetSocket(c) == clientSocket);
-            }
-
-            if (client == null)
-                return;
+            var state = (SendState)asyncResult.AsyncState!;
 
             try
             {
-                clientSocket.EndSend(asyncResult);
+                state.Socket.EndSend(asyncResult);
+
+                OnSentData.Invoke(state.Client, state.Data);
 
                 _logger?.Log(
-                    $"Data sent to [{client.Ip}:{client.Port}] success!",
+                    $"Data sent to [{state.Client.Ip}:{state.Client.Port}] success!",
                     LogType.Low);
             }
             catch (Exception exception)
             {
-                if (!_hideSocketError)
+                if (!_suppressSocketErrors)
                     _logger?.Log(
-                        $"Data sent to [{client.Ip}:{client.Port}] failed! {exception.Message}",
+                        $"Data sent to [{state.Client.Ip}:{state.Client.Port}] failed! {exception.Message}",
                         LogType.Error);
             }
         }
