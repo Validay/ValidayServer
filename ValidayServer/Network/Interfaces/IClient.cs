@@ -1,17 +1,11 @@
-﻿using System.Net.Sockets;
-
-namespace ValidayServer.Network.Interfaces
+﻿namespace ValidayServer.Network.Interfaces
 {
     /// <summary>
-    /// Interface for client
+    /// Interface for client connected to server.
+    /// Does not expose Socket — it is an implementation detail of the concrete Client class.
     /// </summary>
     public interface IClient
     {
-        /// <summary>
-        /// Client socket
-        /// </summary>
-        Socket Socket { get; }   
-
         /// <summary>
         /// Client IP address
         /// </summary>

@@ -11,7 +11,7 @@
         string Name { get; }
 
         /// <summary>
-        /// Get active this manager
+        /// Is this manager active
         /// </summary>
         bool IsActive { get; }
 
