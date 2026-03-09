@@ -72,6 +72,21 @@ namespace ValidayServer.Network.Interfaces
             IClientCommand clientCommand);
 
         /// <summary>
+        /// Send a command to every currently connected client.
+        /// </summary>
+        void Broadcast(IClientCommand command);
+
+        /// <summary>
+        /// Send a command to every currently connected client except <paramref name="exclude"/>.
+        /// </summary>
+        void BroadcastExcept(IClientCommand command, IClient exclude);
+
+        /// <summary>
+        /// Send a command to a specific subset of clients (e.g., a room or a team).
+        /// </summary>
+        void BroadcastTo(IClientCommand command, IEnumerable<IClient> targets);
+
+        /// <summary>
         /// Disconnect a specific client
         /// </summary>
         void DisconnectClient(IClient client);

@@ -9,6 +9,7 @@ using ValidayServer.Logging;
 using ValidayServer.Logging.Interfaces;
 using ValidayServer.Managers.Interfaces;
 using ValidayServer.Network.Commands.Interfaces;
+using ValidayServer.Network.Framing.Interfaces;
 using ValidayServer.Network.Interfaces;
 
 namespace ValidayServer.Network
@@ -52,6 +53,7 @@ namespace ValidayServer.Network
         private readonly List<IManager> _managers;
         private ILogger _logger;
         private IClientFactory _clientFactory;
+        private readonly IPacketFramer _framer;
 
         // Carries socket + pre-allocated buffer across async receive calls.
         private sealed class ReceiveState
@@ -106,6 +108,7 @@ namespace ValidayServer.Network
             _clientFactory = serverSettings.ClientFactory;
             _clients = new List<IClient>();
             _managers = new List<IManager>();
+            _framer = serverSettings.Framer;
             // ReadOnlyCollection wraps the list by reference — create once and reuse.
             Managers = new ReadOnlyCollection<IManager>(_managers);
             ClientConnections = new ReadOnlyCollection<IClient>(_clients);
@@ -233,6 +236,36 @@ namespace ValidayServer.Network
         }
 
         /// <inheritdoc/>
+        public virtual void Broadcast(IClientCommand command)
+        {
+            List<IClient> snapshot;
+            lock (_clients)
+                snapshot = new List<IClient>(_clients);
+
+            foreach (IClient client in snapshot)
+                SendToClient(client, command);
+        }
+
+        /// <inheritdoc/>
+        public virtual void BroadcastExcept(IClientCommand command, IClient exclude)
+        {
+            List<IClient> snapshot;
+            lock (_clients)
+                snapshot = new List<IClient>(_clients);
+
+            foreach (IClient client in snapshot)
+                if (!ReferenceEquals(client, exclude))
+                    SendToClient(client, command);
+        }
+
+        /// <inheritdoc/>
+        public virtual void BroadcastTo(IClientCommand command, IEnumerable<IClient> targets)
+        {
+            foreach (IClient client in targets)
+                SendToClient(client, command);
+        }
+
+        /// <inheritdoc/>
         public virtual void DisconnectClient([NotNull] IClient client)
         {
             OnClientDisconnect(client);
@@ -274,6 +307,8 @@ namespace ValidayServer.Network
 
                     _clients.Remove(client);
                 }
+
+                _framer.RemoveClient(client);
 
                 Socket? socket = GetSocket(client);
                 socket?.Close();
@@ -356,11 +391,14 @@ namespace ValidayServer.Network
                     return;
                 }
 
-                byte[] data = new byte[received];
-                Array.Copy(state.Buffer, data, received);
+                byte[] chunk = new byte[received];
+                Array.Copy(state.Buffer, chunk, received);
 
                 if (client != null)
-                    OnReceivedData.Invoke(client, data);
+                {
+                    foreach (byte[] packet in _framer.ProcessIncoming(client, chunk))
+                        OnReceivedData.Invoke(client, packet);
+                }
 
                 // Re-arm the receive loop, reusing the same buffer.
                 clientSocket.BeginReceive(

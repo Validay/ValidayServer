@@ -8,77 +8,13 @@ using ValidayServer.Managers.Interfaces;
 using ValidayServer.Logging;
 using ValidayServer.Logging.Interfaces;
 using System.Collections.Generic;
-using System.Net.Sockets;
+using System.Linq;
 
 namespace ValidayServerTest
 {
     public class ServerCommandTests
     {
-        // ─── Test helpers ────────────────────────────────────────────────────────
-
-        /// <summary>
-        /// Minimal IServer fake that lets tests trigger events and inspect DisconnectClient calls.
-        /// </summary>
-        class FakeServer : IServer
-        {
-            public bool IsRun => false;
-            public IReadOnlyCollection<IManager> Managers { get; private set; }
-            public IReadOnlyCollection<IClient> ClientConnections { get; } = new List<IClient>().AsReadOnly();
-
-            public event Action<IClient, byte[]> OnReceivedData = delegate { };
-            public event Action<IClient, byte[]> OnSentData = delegate { };
-            public event Action<IClient> OnClientConnected = delegate { };
-            public event Action<IClient> OnClientDisconnected = delegate { };
-
-            public IClient? LastDisconnected { get; private set; }
-            public int DisconnectCallCount { get; private set; }
-
-            private readonly List<IManager> _managers = new List<IManager>();
-
-            public FakeServer()
-            {
-                Managers = _managers.AsReadOnly();
-            }
-
-            public void RegistrationManager(IManager manager)
-            {
-                foreach (var m in _managers)
-                    if (m.Name == manager.Name)
-                        throw new InvalidOperationException($"Manager [{manager.Name}] already registered.");
-                _managers.Add(manager);
-            }
-
-            public void Start() { }
-            public void Stop() { }
-            public void SendToClient(IClient client, IClientCommand command) { }
-
-            public void DisconnectClient(IClient client)
-            {
-                LastDisconnected = client;
-                DisconnectCallCount++;
-            }
-
-            // Helpers to fire events from tests.
-            public void SimulateClientConnected(IClient client) => OnClientConnected(client);
-            public void SimulateDataReceived(IClient client, byte[] data) => OnReceivedData(client, data);
-            public void SimulateClientDisconnected(IClient client) => OnClientDisconnected(client);
-        }
-
-        /// <summary>
-        /// Minimal IClient fake for use in isolation tests.
-        /// </summary>
-        class FakeClient : IClient
-        {
-            public string Ip { get; }
-            public int Port { get; }
-
-            public FakeClient(string ip = "127.0.0.1", int port = 9000)
-            {
-                Ip = ip;
-                Port = port;
-            }
-        }
-
+        // ─── Command helpers ─────────────────────────────────────────────────────
 
         class TestCommandOne : IServerCommand
         {
@@ -105,11 +41,7 @@ namespace ValidayServerTest
                 => throw new InvalidOperationException("Intentional error");
         }
 
-        static IClient MakeFakeClient()
-        {
-            var socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
-            return new Client(socket);
-        }
+        static IClient MakeFakeClient() => new FakeClient();
 
         static (IServer server, CommandHandlerManager handler) MakeServer()
         {

@@ -3,6 +3,8 @@ using System.Net;
 using System.Net.Sockets;
 using ValidayServer.Logging;
 using ValidayServer.Logging.Interfaces;
+using ValidayServer.Network.Framing;
+using ValidayServer.Network.Framing.Interfaces;
 using ValidayServer.Network.Interfaces;
 
 namespace ValidayServer.Network
@@ -58,6 +60,14 @@ namespace ValidayServer.Network
         /// Logger used by the server
         /// </summary>
         public ILogger Logger { get; set; }
+
+        /// <summary>
+        /// Packet framing strategy used by the server.
+        /// Defaults to <see cref="PassthroughFramer"/> (no framing — backward-compatible).
+        /// Set to <see cref="LengthPrefixFramer"/> to enable length-prefix framing,
+        /// which correctly handles TCP fragmentation and coalescing.
+        /// </summary>
+        public IPacketFramer Framer { get; set; } = new PassthroughFramer();
 
         /// <summary>
         /// Ready-to-use default settings (localhost:8888)

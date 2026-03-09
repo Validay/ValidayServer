@@ -15,5 +15,10 @@
         /// Client port
         /// </summary>
         int Port { get; }
+
+        /// <summary>
+        /// Per-client key/value session store.
+        /// </summary>
+        IClientSession Session { get; }
     }
 }

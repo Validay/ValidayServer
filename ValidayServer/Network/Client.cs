@@ -29,6 +29,11 @@ namespace ValidayServer.Network
         public int Port { get; }
 
         /// <summary>
+        /// <inheritdoc/>
+        /// </summary>
+        public IClientSession Session { get; } = new ClientSession();
+
+        /// <summary>
         /// Creates a Client wrapping an accepted socket.
         /// </summary>
         public Client(Socket socket)

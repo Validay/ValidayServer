@@ -1,24 +1,22 @@
-﻿using System.Text;
+using System;
+using ValidayServer.Network;
 using ValidayServer.Network.Commands.Interfaces;
 using ValidayServer.Network.Interfaces;
 
 namespace ValidayServerSample.Network.Commands.ServerCommands
 {
+    /// <summary>
+    /// Handles a simple text message sent by a client.
+    /// Packet format (body after command ID): [string: message]
+    /// </summary>
     public class SimpleMessageServerCommand : IServerCommand
     {
-        /// <summary>
-        /// <inheritdoc/>
-        /// </summary>
-        public void Execute(
-            IClient sender, 
-            byte[] rawData)
+        public void Execute(IClient sender, byte[] rawData)
         {
-            string stringData = Encoding.UTF8.GetString(
-                rawData,
-                sizeof(ushort),
-                rawData.Length - sizeof(ushort));
+            var reader = new PacketReader(rawData).SkipCommandId();
+            string message = reader.ReadString();
 
-            Console.WriteLine($"Client [{sender.Ip}:{sender.Port}]: {stringData}");
+            Console.WriteLine($"[{sender.Ip}:{sender.Port}] → \"{message}\"");
         }
     }
 }
