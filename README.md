@@ -9,6 +9,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-xUnit-blue?style=flat-square)](https://xunit.net)
 
+
+*Designed to pair with [ValidayClient](https://github.com/Validay/ValidayClient).*
 ---
 
 *Simple to start. Easy to extend. Built for real projects.*
